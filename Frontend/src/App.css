@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+/* ── Global luxury design tokens ─────────────────────────────────── */
+:root {
+  --color-obsidian:  #1a1a1a;
+  --color-bone:      #f5f0e8;
+  --color-cream:     #faf8f4;
+  --color-gold:      #c9a84c;
+  --color-gold-dim:  #e8d8a0;
+  --color-muted:     #9e9890;
+  --color-border:    #e2ddd5;
+  --color-text-soft: #6b6560;
+}
+
+/* ── Typography ──────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--color-cream);
+  color: var(--color-obsidian);
+}
+
+/* Display headings use Cormorant Garamond */
+h1, h2, h3 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+/* ── Selection highlight uses gold ───────────────────────────────── */
+::selection {
+  background: var(--color-gold);
+  color: var(--color-obsidian);
+}
+
+/* ── Scrollbar styling (WebKit) ──────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--color-cream); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-gold); }
+
+/* ── Input autofill override ─────────────────────────────────────── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #faf8f4 inset;
+  -webkit-text-fill-color: var(--color-obsidian);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ── Smooth page transitions ─────────────────────────────────────── */
+#root {
+  isolation: isolate;
+}
