@@ -28,3 +28,18 @@ export async function createProductController(req,res) {
         return res.status(500).json({message:"Server error"});
     }
 }
+
+export async function getSellerProductsController(req,res){
+    try {
+        const products=await productModel.find({seller:req.user.id});
+        return res.status(200).json({
+            message:"Products fetched successfully",
+            success:true,
+            products:products
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({message:"Server error"});
+    }
+}
+
