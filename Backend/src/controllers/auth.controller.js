@@ -16,7 +16,7 @@ async function sendTokenResponse(user,res,message) {
     res.status(200).json({
         message,
         success:true,
-        details:{
+        user:{
             email: user.email,
             contact: user.contact,
             fullname: user.fullname,
@@ -112,4 +112,26 @@ export const googleCallback = async (req, res) => {
     res.cookie("token",token);
 
     res.redirect("http://localhost:5173/");
+}
+
+export const getMe=async (req,res)=>{
+    try {
+        const user=await userModel.findById(req.user.id);
+        if(!user){
+            return res.status(404).json({message:"User not found"});
+        }
+        res.status(200).json({
+            message:"User found",
+            success:true,
+            user:{
+                email: user.email,
+                contact: user.contact,
+                fullname: user.fullname,
+                role: user.role
+            }
+        });
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ message: "Server error" });
+    }
 }

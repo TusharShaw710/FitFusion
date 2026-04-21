@@ -97,9 +97,16 @@ export default function RegisterForm() {
 
     setLoading(true);
     // Simulate API call
-    await registerUser(form);
+    const user=await registerUser(form);
+    console.log(user);
     setLoading(false);
-    navigate("/login");
+    if(user.role=="seller"){
+        navigate("/dashboard");
+    }else if(user.role=="buyer"){
+        navigate("/");
+    }else{
+        navigate("/login");
+    }
   };
 
   return (

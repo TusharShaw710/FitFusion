@@ -25,3 +25,13 @@ export const createProduct=async(formData)=>{
         throw error;
     }
 }
+
+export const deleteProduct=async(productId)=>{
+    try {
+        const response=await productApiInstance.delete(`/delete/${productId}`);
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}

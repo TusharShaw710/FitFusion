@@ -43,3 +43,19 @@ export async function getSellerProductsController(req,res){
     }
 }
 
+export async function deleteProductController(req, res) {
+    try {
+        const { id } = req.params;
+        const product = await productModel.findOneAndDelete({ _id: id, seller: req.user.id });
+
+        if (!product) {
+            return res.status(404).json({ message: "Product not found or unauthorized", success: false });
+        }
+
+        return res.status(200).json({ message: "Product deleted successfully", success: true });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Server error", success: false });
+    }
+}
+

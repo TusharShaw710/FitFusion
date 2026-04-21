@@ -76,9 +76,14 @@ export default function LoginForm() {
 
     setLoading(true);
     // Simulate API call
-    await loginUser(form);
+    const user=await loginUser(form);
     setLoading(false);
-    navigate("/");
+    console.log(user);
+    if(user.role=="seller"){
+        navigate("/dashboard");
+    }else{
+        navigate("/");
+    }
   };
 
   return (
