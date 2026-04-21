@@ -99,7 +99,7 @@ export default function CreateProduct() {
 
     try {
       await handleCreateProduct(formdata);
-      navigate("/"); // Or wherever the list is
+      navigate("/dashboard"); // Or wherever the list is
     } catch (err) {
       console.error("Failed to create product:", err);
     }
