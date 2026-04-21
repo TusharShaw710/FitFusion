@@ -22,8 +22,9 @@ export const validateProduct=[
     body("amount")
         .notEmpty().withMessage("Product price is required")
         .isNumeric().withMessage("Product price must be a number"),
-    // body("currency")
-    //     .isIn(["INR","USD","EUR","GBR","JPY"]).withMessage("Invalid currency"),
+    body("currency")
+        .notEmpty().withMessage("Currency is required")
+        .isIn(["INR","USD","EUR","GBR","JPY"]).withMessage("Invalid currency"),
     body().custom((value, { req }) => {
         if (!req.files || req.files.length === 0) {
             throw new Error("Product images are required");

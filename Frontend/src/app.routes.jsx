@@ -1,6 +1,8 @@
 import { createBrowserRouter } from "react-router";
-import LoginPage from "./components/auth/pages/LoginPage";
-import RegisterPage from "./components/auth/pages/RegisterPage";
+import LoginPage from "./features/auth/pages/LoginPage";
+import RegisterPage from "./features/auth/pages/RegisterPage";
+import CreateProduct from "./features/products/pages/CreateProduct";
+
 
 export const router = createBrowserRouter([
     {
@@ -15,4 +17,8 @@ export const router = createBrowserRouter([
         path: "/register",
         element: <RegisterPage />,
     },
+    {
+        path:"/create-product",
+        element:<CreateProduct />
+    }
 ]);

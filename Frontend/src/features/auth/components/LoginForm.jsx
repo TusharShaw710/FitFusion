@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion } from "framer-motion";
-import Input from "../../ui/Input";
-import Button from "../../ui/Button";
-import Divider from "../../ui/Divider";
+import Input from "../../ui/Input.jsx";
+import Button from "../../ui/Button.jsx";
+import Divider from "../../ui/Divider.jsx";
 import { useAuth } from "../hook/useAuth.js";
 
 // ── Stagger config ────────────────────────────────────────────────────────────

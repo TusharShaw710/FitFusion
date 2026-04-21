@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion } from "framer-motion";
-import Input from "../../ui/Input";
-import Button from "../../ui/Button";
-import Toggle from "../../ui/Toggle";
-import Divider from "../../ui/Divider";
+import Input from "../../ui/Input.jsx";
+import Button from "../../ui/Button.jsx";
+import Toggle from "../../ui/Toggle.jsx";
+import Divider from "../../ui/Divider.jsx";
 import {useAuth} from "../hook/useAuth.js"
 
 // ── Validation helpers ────────────────────────────────────────────────────────
