@@ -1,11 +1,11 @@
-import { getSellerProducts, createProduct, deleteProduct,getAllProducts } from "../services/product.api";
+import { getSellerProducts, createProduct, deleteProduct,getAllProducts,getProductById } from "../services/product.api";
 import { useDispatch, useSelector } from "react-redux";
-import { setProducts, setLoading, setError,setAllProducts } from "../product.slice.js";
+import { setProducts, setLoading, setError,setAllProducts, setSelectedProduct } from "../product.slice.js";
 
 
 export const useProduct=()=>{
     const dispatch=useDispatch();
-    const {products,loading,error}=useSelector((state)=>state.product);
+    const {products,loading,error,selectedProduct}=useSelector((state)=>state.product);
 
     const handleFetchSellerProducts=async()=>{
         dispatch(setLoading(true));
@@ -14,7 +14,8 @@ export const useProduct=()=>{
             dispatch(setProducts(response.products));
             
         } catch (error) {
-            dispatch(setError(error));
+            console.log(error);
+            throw error;
             
         }
         finally{
@@ -29,7 +30,8 @@ export const useProduct=()=>{
             dispatch(setProducts(response.products));
             
         } catch (error) {
-            dispatch(setError(error));
+            console.log(error);
+            throw error;
         }finally{
             dispatch(setLoading(false));
         }
@@ -42,7 +44,8 @@ export const useProduct=()=>{
             // Refresh products
             await handleFetchSellerProducts();
         } catch (error) {
-            dispatch(setError(error));
+            console.log(error);
+            throw error;
         } finally {
             dispatch(setLoading(false));
         }
@@ -54,11 +57,25 @@ export const useProduct=()=>{
             const response = await getAllProducts();
             dispatch(setAllProducts(response.products));
         } catch (error) {
-            dispatch(setError(error));
+            console.log(error);
+            throw error;
         } finally {
             dispatch(setLoading(false));
         }
     }
-
-    return {products,loading,error,handleFetchSellerProducts,handleCreateProduct, handleDeleteProduct,handleFetchAllProducts};
+    
+    const handleGetProductById=async(productId)=>{
+        dispatch(setLoading(true));
+        try {
+            const response=await getProductById(productId);
+            dispatch(setSelectedProduct(response.product));
+            
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }finally{
+            dispatch(setLoading(false));
+        }
+    }
+    return {products,loading,error,selectedProduct,handleFetchSellerProducts,handleCreateProduct, handleDeleteProduct,handleFetchAllProducts,handleGetProductById};
 }

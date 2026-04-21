@@ -69,3 +69,21 @@ export async function getAllProducts(req, res) {
     })
 }
 
+export async function getProductByIdController(req,res){
+    const id=req.params.id;
+    try{
+        const product=await productModel.findById(id);
+        if(!product){
+            return res.status(404).json({message:"Product not found",success:false});
+        }
+        return res.status(200).json({
+            message:"Product fetched successfully",
+            success:true,
+            product:product
+        });
+    }catch(error){
+        console.log(error);
+        return res.status(500).json({message:"Server error",success:false});
+    }
+}
+    
