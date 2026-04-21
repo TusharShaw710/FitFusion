@@ -97,8 +97,6 @@ export default function CreateProduct() {
       formdata.append("images", img); 
     });
 
-    console.log(formdata);
-
     try {
       await handleCreateProduct(formdata);
       navigate("/"); // Or wherever the list is
