@@ -86,4 +86,57 @@ export async function getProductByIdController(req,res){
         return res.status(500).json({message:"Server error",success:false});
     }
 }
+
+export async function addProductVarietyController(req,res){
+    try {
+        const { id } = req.params;
+        const { stock } = req.body;
+        
+        // Fields arrive as strings in FormData, need to parse them
+        const price = req.body.price ? JSON.parse(req.body.price) : null;
+        const attributes = req.body.attributes ? JSON.parse(req.body.attributes) : {};
+        const images = req.files;
+
+        if (!price || !stock) {
+            return res.status(400).json({ message: "Price and stock are required", success: false });
+        }
+
+        const product = await productModel.findById(id);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found", success: false });
+        }
+
+        const seller = await userModel.findById(req.user.id);
+
+        // Upload images to storage (ImageKit)
+        const uploadedImages = await uploadImages({
+            images,
+            filename: `${product.name}-variant`,
+            folder: `FitFusion/products/${seller.fullname}/variants`
+        });
+
+        const newVariant = {
+            images: uploadedImages,
+            stock: Number(stock),
+            attributes,
+            price: {
+                amount: Number(price.amount),
+                currency: price.currency || "INR"
+            }
+        };
+
+        product.variants.push(newVariant);
+        await product.save();
+
+        return res.status(200).json({
+            message: "Product variety added successfully",
+            success: true,
+            product: product
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Server error", success: false });
+    }
+}
+            
     

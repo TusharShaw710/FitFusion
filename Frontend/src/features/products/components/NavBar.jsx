@@ -11,6 +11,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 
 const Container = ({ children, className = "" }) => (
   <div className={`max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 ${className}`}>
@@ -19,6 +20,7 @@ const Container = ({ children, className = "" }) => (
 );
 
 const NavBar = () => {
+    const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {

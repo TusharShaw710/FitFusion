@@ -1,4 +1,4 @@
-import { getSellerProducts, createProduct, deleteProduct,getAllProducts,getProductById } from "../services/product.api";
+import { getSellerProducts, createProduct, deleteProduct,getAllProducts,getProductById,addProductVariety } from "../services/product.api";
 import { useDispatch, useSelector } from "react-redux";
 import { setProducts, setLoading, setError,setAllProducts, setSelectedProduct } from "../product.slice.js";
 
@@ -77,5 +77,30 @@ export const useProduct=()=>{
             dispatch(setLoading(false));
         }
     }
-    return {products,loading,error,selectedProduct,handleFetchSellerProducts,handleCreateProduct, handleDeleteProduct,handleFetchAllProducts,handleGetProductById};
+
+    const handleAddProductVariety=async(productId,formData)=>{
+        dispatch(setLoading(true));
+        try {
+            const response=await addProductVariety(productId,formData);
+            dispatch(setSelectedProduct(response.product));
+            
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }finally{
+            dispatch(setLoading(false));
+        }
+    }
+    return {
+        products,
+        loading,
+        error,
+        selectedProduct,
+        handleFetchSellerProducts,
+        handleCreateProduct,
+        handleDeleteProduct,
+        handleFetchAllProducts,
+        handleGetProductById,
+        handleAddProductVariety
+    };
 }

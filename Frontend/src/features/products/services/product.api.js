@@ -55,3 +55,13 @@ export async function getProductById(productId) {
         throw error;
     }
 }
+
+export async function addProductVariety(productId,formData){
+    try {
+        const response=await productApiInstance.post(`/edit/${productId}`,formData);
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}

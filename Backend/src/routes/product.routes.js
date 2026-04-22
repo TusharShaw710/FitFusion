@@ -1,6 +1,6 @@
 import {Router} from "express";
 import { authenticateSeller } from "../middleware/auth.middleware.js";
-import { createProductController,getSellerProductsController, deleteProductController,getAllProducts,getProductByIdController } from "../controllers/product.controller.js";
+import { createProductController,getSellerProductsController, deleteProductController,getAllProducts,getProductByIdController,addProductVarietyController } from "../controllers/product.controller.js";
 import { validateProduct } from "../validations/product.validator.js";
 import multer from "multer";
 
@@ -44,7 +44,20 @@ router.get("/", getAllProducts);
  * @access private
  */
 router.delete("/delete/:id", authenticateSeller, deleteProductController);
-
+/**
+ * @routes /api/product/:id
+ * @method GET
+ * @description get a product by id
+ * @access public
+ */
 router.get("/product/:id",getProductByIdController);
+
+/**
+ * @routes /api/product/update/:id
+ * @method PUT
+ * @description update a product
+ * @access private
+ */
+router.post("/edit/:id",authenticateSeller,upload.array("images",4),addProductVarietyController);
 
 export default router;
