@@ -164,13 +164,33 @@ const AttributeTag = ({ label, value }) => (
 /**
  * ADD VARIANT MODAL
  */
-const AddVariantModal = ({ isOpen, onClose, onAdd, productId, currency }) => {
+const AddVariantModal = ({ isOpen, onClose, onAdd, productId, currency, initialData = null }) => {
   const [formData, setFormData] = useState({
     price: { amount: "", currency: currency || "INR" },
     stock: "",
     attributes: [{ key: "", value: "" }],
     images: [] // Array of File objects
   });
+
+  useEffect(() => {
+    if (initialData) {
+        // Map attribute object back to array
+        const attrs = Object.entries(initialData.attributes || {}).map(([key, value]) => ({ key, value }));
+        setFormData({
+            price: { ...initialData.price },
+            stock: initialData.stock,
+            attributes: attrs.length > 0 ? attrs : [{ key: "", value: "" }],
+            images: initialData._tempFiles || [] // Support previously uploaded local files if any
+        });
+    } else {
+        setFormData({
+            price: { amount: "", currency: currency || "INR" },
+            stock: "",
+            attributes: [{ key: "", value: "" }],
+            images: []
+        });
+    }
+  }, [initialData, isOpen]);
 
   const addAttribute = () => {
     setFormData(prev => ({
@@ -212,7 +232,17 @@ const AddVariantModal = ({ isOpen, onClose, onAdd, productId, currency }) => {
           data.append("images", image);
       });
 
-      onAdd(productId, data);
+      // Instead of direct API, return to parent
+      // Store formData for later sync, and a preview object for UI
+      onAdd({
+          _formData: data,
+          _tempFiles: formData.images, // store original files for re-edit
+          price: { ...formData.price, amount: Number(formData.price.amount) },
+          stock: Number(formData.stock),
+          attributes: attributeMap,
+          // For local preview
+          images: formData.images.map(f => ({ url: URL.createObjectURL(f) }))
+      }, initialData?._tempId);
       onClose();
   };
 
@@ -344,13 +374,95 @@ const SellerProductDetails = () => {
     const navigate = useNavigate();
     const { selectedProduct, loading, error, handleGetProductById, handleAddProductVariety, handleDeleteProduct } = useProduct();
     
+    // UI State
     const [isAddVariantOpen, setIsAddVariantOpen] = useState(false);
+    const [editingVariant, setEditingVariant] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    
+    // Sync / Draft State
+    const [variantsDraft, setVariantsDraft] = useState([]);
+    const [isGlobalSyncing, setIsGlobalSyncing] = useState(false);
+    const [syncingIndex, setSyncingIndex] = useState(null);
 
+    // Initialize/Sync Draft with Redux state
     useEffect(() => {
         if (id) handleGetProductById(id);
         window.scrollTo(0, 0);
     }, [id]);
+
+    useEffect(() => {
+        if (selectedProduct?.variants) {
+            // Map existing variants to include a sync status
+            const initialDraft = selectedProduct.variants.map(v => ({
+                ...v,
+                _syncStatus: 'synced',
+                _tempId: v._id || Math.random().toString(36).substr(2, 9)
+            }));
+            setVariantsDraft(initialDraft);
+        }
+    }, [selectedProduct]);
+
+    // Local CRUD Operations
+    const addLocalVariant = (newData, existingTempId = null) => {
+        if (existingTempId) {
+            // Edit mode
+            setVariantsDraft(prev => prev.map(v => 
+                v._tempId === existingTempId ? { ...v, ...newData, _syncStatus: v._syncStatus === 'synced' ? 'synced' : 'idle' } : v
+            ));
+        } else {
+            // Add mode
+            const newLocalVariant = {
+                ...newData,
+                _syncStatus: 'idle',
+                _tempId: Math.random().toString(36).substr(2, 9),
+                // Mock object for preview if it's FormData
+                _isPreview: true 
+            };
+            setVariantsDraft(prev => [...prev, newLocalVariant]);
+        }
+    };
+
+    const handleEditClick = (variant) => {
+        setEditingVariant(variant);
+        setIsAddVariantOpen(true);
+    };
+
+    const deleteLocalVariant = (tempId) => {
+        setVariantsDraft(prev => prev.filter(v => v._tempId !== tempId));
+    };
+
+    const updateLocalVariantSyncStatus = (tempId, status) => {
+        setVariantsDraft(prev => prev.map(v => 
+            v._tempId === tempId ? { ...v, _syncStatus: status } : v
+        ));
+    };
+
+    // Sequential Sync Logic
+    const handleSyncVariants = async () => {
+        if (isGlobalSyncing) return;
+        setIsGlobalSyncing(true);
+
+        const itemsToSync = variantsDraft.filter(v => v._syncStatus === 'idle' || v._syncStatus === 'error');
+        
+        for (const item of itemsToSync) {
+            const index = variantsDraft.findIndex(v => v._tempId === item._tempId);
+            setSyncingIndex(index);
+            updateLocalVariantSyncStatus(item._tempId, 'syncing');
+
+            try {
+                // handleAddProductVariety updates Redux, which triggers our initialization useEffect
+                // but we want to maintain our draft status during the loop.
+                await handleAddProductVariety(id, item._formData);
+                updateLocalVariantSyncStatus(item._tempId, 'synced');
+            } catch (err) {
+                console.error("Sync failed for variant:", item);
+                updateLocalVariantSyncStatus(item._tempId, 'error');
+            }
+        }
+
+        setSyncingIndex(null);
+        setIsGlobalSyncing(false);
+    };
 
     if (loading && !selectedProduct) {
         return (
@@ -433,7 +545,46 @@ const SellerProductDetails = () => {
                         <Divider className="opacity-40" />
 
                         {/* VARIANTS SECTION */}
-                        <div className="space-y-8">
+                        <div className="space-y-8 relative">
+                            {/* Sync Status Header */}
+                            <AnimatePresence>
+                                {variantsDraft.some(v => v._syncStatus !== 'synced') && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, y: -20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        className="sticky top-0 z-20 flex items-center justify-between p-4 bg-white/80 backdrop-blur-xl border border-[#c9a84c]/20 rounded-2xl shadow-lg"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-[#f5f0e8] rounded-lg">
+                                                <Package size={16} className="text-[#c9a84c]" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-black">
+                                                    {isGlobalSyncing ? `Syncing Local Drafts...` : 'Unsaved Local Drafts'}
+                                                </p>
+                                                <p className="text-[9px] text-[#a09890] mt-0.5 uppercase tracking-widest">
+                                                    {variantsDraft.filter(v => v._syncStatus === 'idle').length} pending • 
+                                                    {variantsDraft.filter(v => v._syncStatus === 'synced').length} saved
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button 
+                                            onClick={handleSyncVariants}
+                                            disabled={isGlobalSyncing}
+                                            className="px-6 py-2 bg-black text-white text-[9px] font-bold uppercase tracking-[0.2em] rounded-full"
+                                        >
+                                            {isGlobalSyncing ? (
+                                                <span className="flex items-center gap-2">
+                                                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><Package size={12} /></motion.div>
+                                                    Syncing...
+                                                </span>
+                                            ) : 'Save Variants'}
+                                        </Button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
                             <div className="flex items-end justify-between">
                                 <div className="space-y-1">
                                     <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-black">Product Variants</h3>
@@ -441,37 +592,83 @@ const SellerProductDetails = () => {
                                 </div>
                                 <button 
                                     onClick={() => setIsAddVariantOpen(true)}
-                                    className="px-6 py-3 bg-black text-white text-[9px] font-bold uppercase tracking-[0.2em] rounded-full hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+                                    className="px-6 py-3 bg-[#f5f0e8] text-black text-[9px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-black hover:text-white transition-all flex items-center gap-2"
                                 >
-                                    <Plus size={14} strokeWidth={3} /> Add Variety
+                                    <Plus size={14} strokeWidth={3} /> Add Locally
                                 </button>
                             </div>
 
                             <div className="space-y-6">
-                                {selectedProduct.variants && selectedProduct.variants.length > 0 ? (
+                                {variantsDraft && variantsDraft.length > 0 ? (
                                     <div className="grid grid-cols-1 gap-6">
-                                        {selectedProduct.variants.map((variant, idx) => (
-                                            <Card key={idx} className="p-6 group hover:border-[#c9a84c]/40 transition-all duration-500">
+                                        {variantsDraft.map((variant, idx) => (
+                                            <Card 
+                                                key={variant._tempId || idx} 
+                                                className={`p-6 group transition-all duration-500 border-l-4 ${
+                                                    variant._syncStatus === 'synced' ? 'border-l-green-500' :
+                                                    variant._syncStatus === 'syncing' ? 'border-l-[#c9a84c]' :
+                                                    variant._syncStatus === 'error' ? 'border-l-red-500' : 'border-l-transparent'
+                                                }`}
+                                            >
                                                 <div className="flex items-center gap-8">
                                                     {/* Variant Image */}
-                                                    <div className="w-20 h-24 bg-[#f5f0e8] rounded-2xl overflow-hidden shadow-sm flex-shrink-0">
+                                                    <div className="relative w-20 h-24 bg-[#f5f0e8] rounded-2xl overflow-hidden shadow-sm flex-shrink-0">
                                                         <img 
                                                             src={variant.images?.[0]?.url || selectedProduct.images?.[0]?.url} 
                                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                                                         />
+                                                        {variant._syncStatus === 'syncing' && (
+                                                            <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
+                                                                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.5 }}>
+                                                                    <Package size={16} className="text-white" />
+                                                                </motion.div>
+                                                            </div>
+                                                        )}
                                                     </div>
 
                                                     {/* Variant Info */}
                                                     <div className="flex-1 space-y-4">
                                                         <div className="flex items-center justify-between">
-                                                            <div className="flex flex-wrap gap-2">
-                                                                {Object.entries(variant.attributes || {}).map(([key, val]) => (
-                                                                    <AttributeTag key={key} label={key} value={val} />
-                                                                ))}
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {Object.entries(variant.attributes || {}).map(([key, val]) => (
+                                                                        <AttributeTag key={key} label={key} value={val} />
+                                                                    ))}
+                                                                </div>
+                                                                {/* Status Badge */}
+                                                                <div className="flex items-center gap-1.5">
+                                                                    {variant._syncStatus === 'synced' && <CheckCircle2 size={12} className="text-green-500" />}
+                                                                    {variant._syncStatus === 'error' && <AlertCircle size={12} className="text-red-500" />}
+                                                                    <span className={`text-[8px] font-bold uppercase tracking-widest ${
+                                                                        variant._syncStatus === 'synced' ? 'text-green-600' :
+                                                                        variant._syncStatus === 'error' ? 'text-red-500' :
+                                                                        variant._syncStatus === 'syncing' ? 'text-[#c9a84c]' : 'text-[#a09890]'
+                                                                    }`}>
+                                                                        {variant._syncStatus}
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                            <div className="flex items-center gap-4 text-[#a09890]">
-                                                                <Edit3 size={14} className="hover:text-black cursor-pointer transition-colors" />
-                                                                <Trash2 size={14} className="hover:text-red-500 cursor-pointer transition-colors" />
+                                                            <div className="flex items-center gap-4">
+                                                                {variant._syncStatus === 'error' && (
+                                                                     <button 
+                                                                        onClick={() => updateLocalVariantSyncStatus(variant._tempId, 'idle')}
+                                                                        className="text-[9px] font-bold uppercase text-[#c9a84c] hover:underline"
+                                                                     >
+                                                                        Retry
+                                                                     </button>
+                                                                )}
+                                                                <button 
+                                                                    onClick={() => handleEditClick(variant)}
+                                                                    className="p-2 text-[#a09890] hover:text-black rounded-full hover:bg-[#f5f0e8] transition-all"
+                                                                >
+                                                                    <Edit3 size={14} />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => deleteLocalVariant(variant._tempId)}
+                                                                    className="p-2 text-[#a09890] hover:text-red-500 rounded-full hover:bg-red-50 transition-all"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
                                                             </div>
                                                         </div>
 
@@ -487,7 +684,7 @@ const SellerProductDetails = () => {
                                                                 </div>
                                                             </div>
                                                             <div className="text-[8px] font-bold uppercase tracking-widest text-[#c9a84c]">
-                                                                SKU-V-{idx + 1}
+                                                                {variant._id ? `SKU-V-${idx + 1}` : 'PROVISIONAL SKU'}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -510,16 +707,14 @@ const SellerProductDetails = () => {
                         </div>
 
                         {/* PRODUCT ACTIONS */}
-                        <div className="pt-12 border-t border-[#f5f0e8] flex items-center gap-4">
-                            <Button className="flex-1 bg-black text-white rounded-[1.25rem] py-5">
-                                Update Overall Details
-                            </Button>
+                        <div className="pt-12 border-t border-[#f5f0e8]">
                             <button 
                                 onClick={() => setIsDeleteModalOpen(true)}
-                                className="p-5 border border-red-100 bg-red-50/30 text-red-400 hover:bg-red-500 hover:text-white rounded-[1.25rem] transition-all"
-                                title="Delete Product Portfolio"
+                                className="w-full flex items-center justify-center gap-3 py-5 bg-red-50/30 text-red-400 border border-red-100 rounded-[1.25rem] hover:bg-red-500 hover:text-white transition-all group"
+                                title="Delete Product from Inventory"
                             >
-                                <Trash2 size={20} strokeWidth={1.5} />
+                                <Trash2 size={20} strokeWidth={1.5} className="group-hover:scale-110 transition-transform" />
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Delete Product from Inventory</span>
                             </button>
                         </div>
                     </div>
@@ -529,10 +724,14 @@ const SellerProductDetails = () => {
             {/* MODALS */}
             <AddVariantModal 
                 isOpen={isAddVariantOpen} 
-                onClose={() => setIsAddVariantOpen(false)}
-                onAdd={handleAddProductVariety}
+                onClose={() => {
+                    setIsAddVariantOpen(false);
+                    setEditingVariant(null);
+                }}
+                onAdd={addLocalVariant}
                 productId={id}
                 currency={selectedProduct.price.currency}
+                initialData={editingVariant}
             />
 
             {/* Delete Confirmation Modal Overlay */}

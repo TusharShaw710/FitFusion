@@ -223,6 +223,103 @@ const ProductDetails = () => {
   
   const [quantity, setQuantity] = useState(1);
   const [openSection, setOpenSection] = useState(0); // 0 for Description
+  
+  // Variant State
+  const [selectedAttributes, setSelectedAttributes] = useState({});
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Extract unique attributes from variants
+  const availableAttributes = useMemo(() => {
+    if (!selectedProduct?.variants) return {};
+    const attrs = {};
+    selectedProduct.variants.forEach(v => {
+      Object.entries(v.attributes || {}).forEach(([key, val]) => {
+        if (!attrs[key]) attrs[key] = new Set();
+        attrs[key].add(val);
+      });
+    });
+    return Object.fromEntries(Object.entries(attrs).map(([k, v]) => [k, Array.from(v)]));
+  }, [selectedProduct]);
+
+  // Find a representative variant based on partial or full selection
+  // This is used for updating images and price as soon as a user starts selecting
+  const representativeVariant = useMemo(() => {
+    if (!selectedProduct?.variants || Object.keys(selectedAttributes).length === 0) return null;
+    
+    return selectedProduct.variants.find(v => 
+      Object.entries(selectedAttributes).every(([key, val]) => v.attributes[key] === val)
+    );
+  }, [selectedAttributes, selectedProduct]);
+
+  // Exact match required for 'Add to Cart' and stock status
+  const currentVariant = useMemo(() => {
+    const requiredKeys = Object.keys(availableAttributes);
+    if (requiredKeys.length === 0 || Object.keys(selectedAttributes).length < requiredKeys.length) return null;
+    return representativeVariant;
+  }, [selectedAttributes, availableAttributes, representativeVariant]);
+
+  // REMOVED: Auto-select first available variant on load
+  // We want to show the main product initially
+
+  // Determine active images (variant images vs base product images)
+  const activeImages = useMemo(() => {
+    if (representativeVariant?.images?.length > 0) return representativeVariant.images;
+    return selectedProduct?.images || [];
+  }, [representativeVariant, selectedProduct]);
+
+  // Determine active price
+  const activePrice = representativeVariant?.price || selectedProduct?.price;
+
+  // Helper to find a representative image for a specific attribute value (e.g. Color)
+  const getAttributeImage = (attrName, value) => {
+    const variant = selectedProduct?.variants?.find(v => v.attributes[attrName] === value && v.images?.[0]);
+    return variant?.images?.[0]?.url;
+  };
+
+  // Helper to check if an option is available given current other selections
+  const isOptionValid = (attrName, value) => {
+    if (!selectedProduct?.variants) return false;
+    
+    // Create a hypothetical selection set
+    const hypoSelection = { ...selectedAttributes, [attrName]: value };
+    
+    // Check if any variant matches this hypothetical selection
+    // Note: We only check against *other* selected attributes, not the one we are testing
+    return selectedProduct.variants.some(v => {
+        return Object.entries(selectedAttributes).every(([key, val]) => {
+            if (key === attrName) return true; // ignore the current attribute being tested
+            return v.attributes[key] === val;
+        }) && v.attributes[attrName] === value;
+    });
+  };
+
+  // Stock status
+  const isOutOfStock = currentVariant ? currentVariant.stock === 0 : false;
+  const isLowStock = currentVariant ? currentVariant.stock > 0 && currentVariant.stock < 5 : false;
+
+  const handleAddToCart = () => {
+    // Validate all attributes selected
+    const requiredKeys = Object.keys(availableAttributes);
+    const selectedKeys = Object.keys(selectedAttributes);
+    
+    if (selectedKeys.length < requiredKeys.length) {
+      setErrorMsg("Please select all options");
+      return;
+    }
+
+    if (isOutOfStock) {
+      setErrorMsg("This combination is currently out of stock");
+      return;
+    }
+
+    setErrorMsg("");
+    console.log("Adding to cart:", {
+      productId: selectedProduct._id,
+      variant: currentVariant,
+      quantity
+    });
+    // Implementation for cart hook would go here
+  };
 
   useEffect(() => {
     handleGetProductById(id);
@@ -258,7 +355,7 @@ const ProductDetails = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start">
           {/* Left: Gallery */}
           <div className="w-full">
-            <ImageGallery images={selectedProduct.images} />
+            <ImageGallery key={currentVariant?._id || 'base'} images={activeImages} />
           </div>
 
           {/* Right: Info (Sticky) */}
@@ -271,14 +368,114 @@ const ProductDetails = () => {
                 {selectedProduct.name}
               </h1>
               <div className="flex items-center gap-4">
-                <span className="text-xl font-light text-black/80">
-                  {selectedProduct.price.currency} {selectedProduct.price.amount}
-                </span>
+                <AnimatePresence mode="wait">
+                  <motion.span 
+                    key={activePrice.amount}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="text-xl font-light text-black/80"
+                  >
+                    {activePrice.currency} {activePrice.amount}
+                  </motion.span>
+                </AnimatePresence>
                 
-                <span className="text-[10px] font-bold text-green-600 tracking-widest uppercase">
-                  In Stock
+                <span className={`text-[10px] font-bold tracking-widest uppercase ${isOutOfStock ? 'text-red-500' : isLowStock ? 'text-orange-500' : 'text-green-600'}`}>
+                  {isOutOfStock ? 'Out of Stock' : isLowStock ? 'Low Stock' : 'In Stock'}
                 </span>
               </div>
+            </div>
+
+            {/* VARIANT SELECTORS */}
+            <div className="space-y-10 py-4">
+              <div className="flex items-center justify-between border-b border-black/5 pb-4">
+                <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-black">Selection</h3>
+                {Object.keys(selectedAttributes).length > 0 && (
+                  <button 
+                    onClick={() => setSelectedAttributes({})}
+                    className="text-[9px] font-bold uppercase tracking-widest text-[#c9a84c] hover:text-black transition-colors"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+
+              {Object.entries(availableAttributes).map(([attrName, options]) => (
+                <div key={attrName} className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-black/40">{attrName}</span>
+                    <span className="text-[10px] font-bold tracking-[0.1em] text-black uppercase">
+                      {selectedAttributes[attrName] || 'Select'}
+                    </span>
+                  </div>
+
+                  {attrName.toLowerCase() === 'color' ? (
+                    <div className="flex flex-wrap gap-4">
+                      {options
+                        .filter(val => isOptionValid(attrName, val))
+                        .map((val) => {
+                          const variantImg = getAttributeImage(attrName, val);
+                          return (
+                            <button
+                              key={val}
+                              onClick={() => setSelectedAttributes(prev => {
+                                if (prev[attrName] === val) {
+                                  const next = { ...prev };
+                                  delete next[attrName];
+                                  return next;
+                                }
+                                return { ...prev, [attrName]: val };
+                              })}
+                              className={`relative w-12 h-12 rounded-full transition-all duration-300 p-1 border ${
+                                selectedAttributes[attrName] === val ? 'border-black' : 'border-transparent hover:border-black/20'
+                              }`}
+                            >
+                              <div className="w-full h-full rounded-full overflow-hidden shadow-inner bg-[#f7f7f7]">
+                                  {variantImg ? (
+                                      <img src={variantImg} alt={val} className="w-full h-full object-cover" title={val} />
+                                  ) : (
+                                      <div className="w-full h-full" style={{ backgroundColor: val.toLowerCase() }} title={val} />
+                                  )}
+                              </div>
+                              {selectedAttributes[attrName] === val && (
+                                <motion.div 
+                                  layoutId="colorSelect"
+                                  className="absolute inset-0 rounded-full border border-black -m-[2px]"
+                                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-3">
+                      {options
+                        .filter(val => isOptionValid(attrName, val))
+                        .map((val) => (
+                        <button
+                          key={val}
+                          onClick={() => setSelectedAttributes(prev => {
+                            if (prev[attrName] === val) {
+                              const next = { ...prev };
+                              delete next[attrName];
+                              return next;
+                            }
+                            return { ...prev, [attrName]: val };
+                          })}
+                          className={`min-w-[50px] h-11 px-4 flex items-center justify-center border text-[11px] font-bold transition-all duration-300 ${
+                            selectedAttributes[attrName] === val 
+                              ? 'bg-black text-white border-black' 
+                              : 'bg-white text-black border-black/10 hover:border-black'
+                          }`}
+                        >
+                          {val}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
 
             <p className="text-sm font-light text-black/60 leading-relaxed tracking-wide">
@@ -307,13 +504,28 @@ const ProductDetails = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <Button className="flex-1 bg-black text-white py-6 rounded-none text-[10px] tracking-[0.3em] font-bold uppercase transition-all hover:bg-black/80">
-                  Add to Shopping Bag
-                </Button>
-                <button className="p-5 border border-black/10 hover:bg-black hover:text-white transition-all duration-300">
-                  <Heart size={18} strokeWidth={1.5} />
-                </button>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-4">
+                  <Button 
+                    disabled={isOutOfStock}
+                    onClick={handleAddToCart}
+                    className={`flex-1 ${isOutOfStock ? 'bg-gray-200 cursor-not-allowed' : 'bg-black'} text-white py-6 rounded-none text-[10px] tracking-[0.3em] font-bold uppercase transition-all hover:bg-black/80`}
+                  >
+                    {isOutOfStock ? 'Sold Out' : 'Add to Shopping Bag'}
+                  </Button>
+                  <button className="p-5 border border-black/10 hover:bg-black hover:text-white transition-all duration-300">
+                    <Heart size={18} strokeWidth={1.5} />
+                  </button>
+                </div>
+                {errorMsg && (
+                  <motion.p 
+                    initial={{ opacity: 0, y: -10 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    className="text-[10px] font-bold uppercase tracking-widest text-red-500"
+                  >
+                    {errorMsg}
+                  </motion.p>
+                )}
               </div>
             </div>
 
