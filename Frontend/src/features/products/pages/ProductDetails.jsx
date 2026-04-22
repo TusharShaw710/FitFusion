@@ -5,6 +5,7 @@ import {
   ShoppingBag, 
   Heart, 
   ChevronRight, 
+  ChevronLeft,
   Plus, 
   Minus, 
   ArrowLeft,
@@ -14,11 +15,10 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { useProduct } from '../hooks/useProduct';
-import { useSelector } from 'react-redux';
+import NavBar from '../components/NavBar.jsx';
 
 // Stitch UI Primitives
 import Button from '../../ui/Button.jsx';
-import Divider from '../../ui/Divider.jsx';
 
 /**
  * STITCH PRIMITIVES
@@ -48,6 +48,7 @@ const Breadcrumbs = ({ product }) => {
 const ImageGallery = ({ images }) => {
   const [activeImage, setActiveImage] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   const handleMouseMove = (e) => {
@@ -57,10 +58,22 @@ const ImageGallery = ({ images }) => {
     setMousePos({ x, y });
   };
 
+  const nextImage = (e) => {
+    e.stopPropagation();
+    setActiveImage((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = (e) => {
+    e.stopPropagation();
+    setActiveImage((prev) => (prev - 1 + images.length) % images.length);
+  };
+
   if (!images || images.length === 0) return null;
 
   return (
+    
     <div className="flex flex-col-reverse lg:flex-row gap-6">
+      <NavBar/>
       {/* Thumbnails */}
       <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-4 lg:pb-0">
         {images.map((img, idx) => (
@@ -76,26 +89,91 @@ const ImageGallery = ({ images }) => {
         ))}
       </div>
 
-      {/* Main Image */}
+      {/* Main Image Container */}
       <div 
-        className="relative flex-1 aspect-[4/5] bg-[#f7f7f7] overflow-hidden cursor-crosshair"
-        onMouseEnter={() => setIsZoomed(true)}
-        onMouseLeave={() => setIsZoomed(false)}
+        className="relative flex-1 aspect-[4/5] bg-[#f7f7f7] overflow-hidden group cursor-crosshair"
+        onMouseEnter={() => {
+          setIsHovered(true);
+          // Only zoom on desktop or if specifically intended, but here we can keep it
+          // setIsZoomed(true); 
+        }}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          setIsZoomed(false);
+        }}
         onMouseMove={handleMouseMove}
+        onClick={(e) => {
+          handleMouseMove(e);
+          setIsZoomed(!isZoomed);
+        }}
       >
-        <motion.img
-          key={activeImage}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          src={images[activeImage]?.url}
-          alt="Product Main"
-          className="w-full h-full object-cover transition-transform duration-500 ease-out"
-          style={{
-            transform: isZoomed ? 'scale(1.5)' : 'scale(1)',
-            transformOrigin: `${mousePos.x}% ${mousePos.y}%`
-          }}
-        />
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.img
+            key={activeImage}
+            initial={{ opacity: 0 }}
+            animate={{ 
+              opacity: 1,
+              scale: isZoomed ? 1.8 : 1,
+            }}
+            exit={{ opacity: 0 }}
+            transition={{ 
+              opacity: { duration: 0.4 },
+              scale: { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
+            }}
+            src={images[activeImage]?.url}
+            alt="Product Main"
+            className="w-full h-full object-cover"
+            style={{
+              transformOrigin: `${mousePos.x}% ${mousePos.y}%`,
+            }}
+          />
+        </AnimatePresence>
+
+        {/* Hover Slider Controls */}
+        <AnimatePresence>
+          {isHovered && !isZoomed && (
+            <>
+              <motion.button
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                onClick={prevImage}
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/80 backdrop-blur-sm rounded-full text-black shadow-lg hover:bg-white transition-all z-10"
+              >
+                <ChevronLeft size={20} strokeWidth={1.5} />
+              </motion.button>
+              
+              <motion.button
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                onClick={nextImage}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/80 backdrop-blur-sm rounded-full text-black shadow-lg hover:bg-white transition-all z-10"
+              >
+                <ChevronRight size={20} strokeWidth={1.5} />
+              </motion.button>
+
+              {/* Progress Indicators */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                {images.map((_, idx) => (
+                  <div 
+                    key={idx}
+                    className={`h-0.5 transition-all duration-300 ${
+                      activeImage === idx ? 'w-6 bg-black' : 'w-2 bg-black/20'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Zoom Hint */}
+        {!isZoomed && isHovered && (
+          <div className="absolute top-4 right-4 text-[8px] font-bold tracking-[0.2em] uppercase bg-black/10 backdrop-blur-md px-2 py-1 rounded">
+            Click to Zoom
+          </div>
+        )}
       </div>
     </div>
   );
@@ -196,7 +274,7 @@ const ProductDetails = () => {
                 <span className="text-xl font-light text-black/80">
                   {selectedProduct.price.currency} {selectedProduct.price.amount}
                 </span>
-                <Divider vertical className="h-4 bg-black/10" />
+                
                 <span className="text-[10px] font-bold text-green-600 tracking-widest uppercase">
                   In Stock
                 </span>
@@ -207,7 +285,6 @@ const ProductDetails = () => {
               {selectedProduct.description}
             </p>
 
-            <Divider className="bg-black/5" />
 
             {/* Actions */}
             <div className="space-y-6">
