@@ -31,5 +31,50 @@ export const validateProduct=[
         }
         return true;
     }),
+    body("category")
+        .notEmpty().withMessage("Category is required")
+        .isIn(["Jeans","Shorts","T-Shirts","Shoes","Tracksuit","Others"]).withMessage("Invalid category"),
+    body("stock")
+        .notEmpty().withMessage("Stock is required")
+        .isNumeric().withMessage("Stock must be a number"),
+    body("attributes")
+        .notEmpty().withMessage("Attributes are required")
+        .custom((value) => {
+            try {
+            const parsed = typeof value === "string" ? JSON.parse(value) : value;
+
+            if (typeof parsed !== "object" || Array.isArray(parsed)) {
+                throw new Error();
+            }
+
+            return true;
+            } catch {
+            throw new Error("Attributes must be a valid JSON object");
+            }
+    }),
+    validateRequest
+];
+
+export const validateAddVariant = [
+    body("amount")
+        .notEmpty().withMessage("Price is required"),
+    body("currency")
+        .notEmpty().withMessage("Currency is required")
+        .isIn(["INR","USD","EUR","GBR","JPY"]).withMessage("Invalid currency"),
+    body("stock")
+        .notEmpty().withMessage("Stock is required")
+        .isNumeric().withMessage("Stock must be a number"),
+    body("attributes").custom((value, { req }) => {
+        if (!req.body.attributes || req.body.attributes.length === 0) {
+            throw new Error("Attributes are required");
+        }
+        return true;
+    }),
+    body().custom((value, { req }) => {
+        if (!req.files || req.files.length === 0) {
+            throw new Error("Images are required");
+        }
+        return true;
+    }),
     validateRequest
 ];

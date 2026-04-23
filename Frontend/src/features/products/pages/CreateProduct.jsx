@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router";
-import { ArrowLeft, Sparkles, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Sparkles, CheckCircle2, Plus, X } from "lucide-react";
 
 // UI Components
 import Input from "../../ui/Input.jsx";
@@ -26,8 +26,13 @@ export default function CreateProduct() {
     description: "",
     amount: "",
     currency: "INR",
+    category: "Others",
+    stock: "",
+    attributes: {}, // { Size: "M", Color: "Black" }
     images: [], // Array of File objects
   });
+
+  const [attrInput, setAttrInput] = useState({ key: "", value: "" });
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -43,6 +48,9 @@ export default function CreateProduct() {
     }
     if (field === "amount" && (!value || isNaN(value) || Number(value) <= 0)) {
       error = "Please enter a valid amount.";
+    }
+    if (field === "stock" && (value !== "" && (isNaN(value) || Number(value) < 0))) {
+      error = "Stock must be a positive number.";
     }
     if (field === "images" && value.length === 0) {
       error = "At least one product image is required.";
@@ -74,6 +82,25 @@ export default function CreateProduct() {
     );
   }, [form, errors]);
 
+  const addAttribute = () => {
+    if (attrInput.key && attrInput.value) {
+      const normalizedKey = attrInput.key.trim().charAt(0).toUpperCase() + attrInput.key.trim().slice(1).toLowerCase();
+      setForm(prev => ({
+        ...prev,
+        attributes: { ...prev.attributes, [normalizedKey]: attrInput.value }
+      }));
+      setAttrInput({ key: "", value: "" });
+    }
+  };
+
+  const removeAttribute = (key) => {
+    setForm(prev => {
+      const newAttrs = { ...prev.attributes };
+      delete newAttrs[key];
+      return { ...prev, attributes: newAttrs };
+    });
+  };
+
   // ── Actions ──────────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -93,6 +120,10 @@ export default function CreateProduct() {
     formdata.append("description",form.description);
     formdata.append("amount",form.amount);
     formdata.append("currency",form.currency);
+    formdata.append("category",form.category);
+    formdata.append("stock",form.stock || 0);
+    formdata.append("attributes", JSON.stringify(form.attributes));
+    
     form.images.forEach((img) => {
       formdata.append("images", img); 
     });
@@ -214,9 +245,99 @@ export default function CreateProduct() {
                   <Select
                     label="Currency"
                     value={form.currency}
-                    options={["INR", "USD", "EUR", "GBR", "JPY"]}
+                    options={["INR", "USD", "EUR", "GBP", "JPY"]}
                     onChange={(val) => handleChange("currency")(val)}
                   />
+                </div>
+              </motion.section>
+
+              {/* Classification & Inventory */}
+              <motion.section variants={itemVariants} className="space-y-8">
+                <div className="flex items-center gap-4 mb-2">
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-[#c9a84c] font-bold whitespace-nowrap">Inventory & Category</span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-[#e2ddd5] to-transparent" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <Select
+                    label="Category"
+                    value={form.category}
+                    options={["Jeans", "Shorts", "T-Shirts", "Shoes", "Tracksuit", "Others"]}
+                    onChange={(val) => handleChange("category")(val)}
+                  />
+                  <Input
+                    label="Initial Stock"
+                    type="text"
+                    value={form.stock}
+                    onChange={handleChange("stock")}
+                    onBlur={handleBlur("stock")}
+                    error={errors.stock}
+                    success={touched.stock && !errors.stock}
+                  />
+                </div>
+              </motion.section>
+
+              {/* Attributes */}
+              <motion.section variants={itemVariants} className="space-y-8">
+                <div className="flex items-center gap-4 mb-2">
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-[#c9a84c] font-bold whitespace-nowrap">Specifications</span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-[#e2ddd5] to-transparent" />
+                </div>
+
+                <div className="space-y-6">
+                  <div className="flex flex-wrap gap-2 min-h-[40px] p-4 bg-white/40 rounded-2xl border border-dashed border-[#e2ddd5]">
+                    {Object.keys(form.attributes).length === 0 && (
+                      <span className="text-[10px] text-[#a09890] uppercase tracking-widest self-center mx-auto">No attributes added</span>
+                    )}
+                    <AnimatePresence>
+                      {Object.entries(form.attributes).map(([key, value]) => (
+                        <motion.div
+                          key={key}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-[#1a1a1a] text-white rounded-full"
+                        >
+                          <span className="text-[9px] font-bold uppercase tracking-widest opacity-60">{key}:</span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider">{value}</span>
+                          <button 
+                            type="button" 
+                            onClick={() => removeAttribute(key)}
+                            className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-7 gap-4 items-end">
+                    <div className="md:col-span-3">
+                      <Input
+                        label="Property (e.g. Size)"
+                        value={attrInput.key}
+                        onChange={(e) => setAttrInput(prev => ({ ...prev, key: e.target.value }))}
+                      />
+                    </div>
+                    <div className="md:col-span-3">
+                      <Input
+                        label="Value (e.g. Medium)"
+                        value={attrInput.value}
+                        onChange={(e) => setAttrInput(prev => ({ ...prev, value: e.target.value }))}
+                      />
+                    </div>
+                    <div className="md:col-span-1">
+                      <button
+                        type="button"
+                        onClick={addAttribute}
+                        disabled={!attrInput.key || !attrInput.value}
+                        className="w-full aspect-square flex items-center justify-center bg-[#c9a84c] text-white rounded-xl hover:bg-[#b8973d] transition-colors disabled:opacity-30"
+                      >
+                        <Plus className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </motion.section>
 

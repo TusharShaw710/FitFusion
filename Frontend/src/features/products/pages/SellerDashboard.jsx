@@ -66,6 +66,7 @@ const SectionHeader = ({ title, subtitle, actions }) => (
  */
 const ProductCard = ({ product, onEdit, onDelete, onView }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const navigate=useNavigate();
 
   return (
     <motion.div
@@ -77,7 +78,7 @@ const ProductCard = ({ product, onEdit, onDelete, onView }) => {
       {/* Image Section */}
       <div className="aspect-[4/5] overflow-hidden relative bg-[#f5f0e8]">
         <img
-          src={product.images?.[0]?.url || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop"}
+          src={product.variants?.[0]?.images?.[0]?.url || product.images?.[0]?.url || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop"}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
@@ -93,7 +94,7 @@ const ProductCard = ({ product, onEdit, onDelete, onView }) => {
             >
               <button 
                 type="button"
-                onClick={() => onView?.(product)}
+                onClick={() =>  navigate(`/product/${product._id}`)}
                 className="p-3 bg-white text-black rounded-full shadow-xl hover:bg-black hover:text-white transition-colors cursor-pointer"
                 title="Quick View"
               >
@@ -134,7 +135,7 @@ const ProductCard = ({ product, onEdit, onDelete, onView }) => {
             {product.name}
           </h3>
           <span className="text-sm font-semibold text-[#1a1a1a]">
-            {product.price.currency} {product.price.amount}
+            {(product.variants?.[0]?.price?.currency) || "INR"} {(product.variants?.[0]?.price?.amount) || 0}
           </span>
         </div>
         <p className="text-xs text-[#9e9890] font-light line-clamp-2 leading-relaxed mb-4">
@@ -248,7 +249,8 @@ export default function SellerDashboard() {
     if (!products) return [];
     return products.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-      const matchesCurrency = currencyFilter === "ALL" || p.price.currency === currencyFilter;
+      const productPrice = p.variants?.[0]?.price;
+      const matchesCurrency = currencyFilter === "ALL" || productPrice?.currency === currencyFilter;
       return matchesSearch && matchesCurrency;
     });
   }, [products, search, currencyFilter]);
@@ -384,7 +386,7 @@ export default function SellerDashboard() {
               <div className="text-center md:text-left">
                 <p className="text-[10px] tracking-[0.2em] uppercase text-[#9e9890] font-bold mb-1">Portfolio Value</p>
                 <p className="text-3xl font-light text-[#1a1a1a]">
-                  {products?.[0]?.price.currency || "USD"} {products?.reduce((acc, curr) => acc + Number(curr.price.amount || 0), 0).toLocaleString()}
+                  {products?.[0]?.variants?.[0]?.price?.currency || "INR"} {products?.reduce((acc, curr) => acc + Number(curr.variants?.[0]?.price?.amount || 0), 0).toLocaleString()}
                 </p>
               </div>
             </div>

@@ -53,7 +53,7 @@ const ProductCard = ({ product }) => {
     >
       <div className="relative aspect-[4/5] bg-[#f7f7f7] overflow-hidden mb-6">
         <motion.img 
-          src={product.images?.[0]?.url || "https://images.unsplash.com/photo-1539106609512-725e3652e361?q=80&w=1000&auto=format&fit=crop"}
+          src={product.variants?.[0]?.images?.[0]?.url || product.images?.[0]?.url || "https://images.unsplash.com/photo-1539106609512-725e3652e361?q=80&w=1000&auto=format&fit=crop"}
           alt={product.name}
           animate={{ scale: isHovered ? 1.05 : 1 }}
           transition={{ duration: 0.8, ease: [0.33, 1, 0.68, 1] }}
@@ -88,7 +88,7 @@ const ProductCard = ({ product }) => {
             {product.name}
           </h3>
           <span className="text-[13px] text-[#1a1a1a] font-normal">
-            {product.price.currency} {product.price.amount}
+            {(product.variants?.[0]?.price?.currency) || "INR"} {(product.variants?.[0]?.price?.amount) || 0}
           </span>
         </div>
         <p className="text-[11px] text-[#888] font-light tracking-wide uppercase">
@@ -139,7 +139,10 @@ const Home = () => {
     return allProducts.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
                             p.description.toLowerCase().includes(search.toLowerCase());
-      const matchesCurrency = currencyFilter === "ALL" || p.price.currency === currencyFilter;
+      
+      const productPrice = p.variants?.[0]?.price;
+      const matchesCurrency = currencyFilter === "ALL" || productPrice?.currency === currencyFilter;
+      
       return matchesSearch && matchesCurrency;
     });
   }, [allProducts, search, currencyFilter]);

@@ -217,15 +217,16 @@ const AddVariantModal = ({ isOpen, onClose, onAdd, productId, currency, initialD
       
       const attributeMap = {};
       formData.attributes.forEach(attr => {
-          if (attr.key && attr.value) attributeMap[attr.key] = attr.value;
+          if (attr.key && attr.value) {
+              const normalizedKey = attr.key.trim().charAt(0).toUpperCase() + attr.key.trim().slice(1).toLowerCase();
+              attributeMap[normalizedKey] = attr.value;
+          }
       });
 
       const data = new FormData();
       data.append("stock", formData.stock);
-      data.append("price", JSON.stringify({
-          amount: Number(formData.price.amount),
-          currency: formData.price.currency
-      }));
+      data.append("amount", formData.price.amount);
+      data.append("currency", formData.price.currency);
       data.append("attributes", JSON.stringify(attributeMap));
       
       formData.images.forEach(image => {
@@ -402,6 +403,11 @@ const SellerProductDetails = () => {
         }
     }, [selectedProduct]);
 
+    const defaultVariant = useMemo(() => {
+        if (!selectedProduct?.variants) return null;
+        return selectedProduct.variants.find(v => v._id === selectedProduct.defaultVariantId) || selectedProduct.variants[0];
+    }, [selectedProduct]);
+
     // Local CRUD Operations
     const addLocalVariant = (newData, existingTempId = null) => {
         if (existingTempId) {
@@ -508,7 +514,7 @@ const SellerProductDetails = () => {
                     
                     {/* LEFT: VISUALS */}
                     <div className="w-full">
-                        <ImageGallery images={selectedProduct.images} />
+                        <ImageGallery images={selectedProduct.images?.length > 0 ? selectedProduct.images : (defaultVariant?.images || [])} />
                     </div>
 
                     {/* RIGHT: CONTENT (Sticky) */}
@@ -527,7 +533,9 @@ const SellerProductDetails = () => {
                             <div className="flex items-center gap-8">
                                 <div>
                                     <p className="text-[9px] uppercase tracking-widest font-bold text-[#a09890] mb-1">Base Price</p>
-                                    <p className="text-3xl font-light">{selectedProduct.price.currency} {selectedProduct.price.amount}</p>
+                                    <p className="text-3xl font-light">
+                                        {defaultVariant?.price?.currency || "INR"} {defaultVariant?.price?.amount || 0}
+                                    </p>
                                 </div>
                                 <div className="h-10 w-px bg-[#e2ddd5]" />
                                 <div>
@@ -614,7 +622,7 @@ const SellerProductDetails = () => {
                                                     {/* Variant Image */}
                                                     <div className="relative w-20 h-24 bg-[#f5f0e8] rounded-2xl overflow-hidden shadow-sm flex-shrink-0">
                                                         <img 
-                                                            src={variant.images?.[0]?.url || selectedProduct.images?.[0]?.url} 
+                                                            src={variant.images?.[0]?.url || defaultVariant?.images?.[0]?.url || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop"} 
                                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                                                         />
                                                         {variant._syncStatus === 'syncing' && (
@@ -676,7 +684,7 @@ const SellerProductDetails = () => {
                                                             <div className="flex gap-10">
                                                                 <div className="space-y-0.5">
                                                                     <p className="text-[9px] uppercase tracking-widest font-bold text-[#a09890]">Variant Price</p>
-                                                                    <p className="text-sm font-semibold">{variant.price.currency} {variant.price.amount}</p>
+                                                                    <p className="text-sm font-semibold">{(variant.price?.currency) || "INR"} {(variant.price?.amount) || 0}</p>
                                                                 </div>
                                                                 <div className="space-y-0.5">
                                                                     <p className="text-[9px] uppercase tracking-widest font-bold text-[#a09890]">Stock Available</p>
@@ -730,7 +738,7 @@ const SellerProductDetails = () => {
                 }}
                 onAdd={addLocalVariant}
                 productId={id}
-                currency={selectedProduct.price.currency}
+                currency={defaultVariant?.price?.currency || "INR"}
                 initialData={editingVariant}
             />
 

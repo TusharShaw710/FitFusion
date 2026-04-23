@@ -227,6 +227,8 @@ const ProductDetails = () => {
   // Variant State
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [errorMsg, setErrorMsg] = useState('');
+  
+  const normalizeKey = (key) => key.trim().charAt(0).toUpperCase() + key.trim().slice(1).toLowerCase();
 
   // Extract unique attributes from variants
   const availableAttributes = useMemo(() => {
@@ -234,8 +236,9 @@ const ProductDetails = () => {
     const attrs = {};
     selectedProduct.variants.forEach(v => {
       Object.entries(v.attributes || {}).forEach(([key, val]) => {
-        if (!attrs[key]) attrs[key] = new Set();
-        attrs[key].add(val);
+        const normalizedKey = normalizeKey(key);
+        if (!attrs[normalizedKey]) attrs[normalizedKey] = new Set();
+        attrs[normalizedKey].add(val);
       });
     });
     return Object.fromEntries(Object.entries(attrs).map(([k, v]) => [k, Array.from(v)]));
@@ -246,9 +249,16 @@ const ProductDetails = () => {
   const representativeVariant = useMemo(() => {
     if (!selectedProduct?.variants || Object.keys(selectedAttributes).length === 0) return null;
     
-    return selectedProduct.variants.find(v => 
-      Object.entries(selectedAttributes).every(([key, val]) => v.attributes[key] === val)
-    );
+    return selectedProduct.variants.find(v => {
+      // Create a normalized map of variant attributes for comparison
+      const normalizedVariantAttrs = Object.fromEntries(
+        Object.entries(v.attributes || {}).map(([k, val]) => [normalizeKey(k), val])
+      );
+      
+      return Object.entries(selectedAttributes).every(([key, val]) => 
+        normalizedVariantAttrs[key] === val
+      );
+    });
   }, [selectedAttributes, selectedProduct]);
 
   // Exact match required for 'Add to Cart' and stock status
@@ -261,18 +271,29 @@ const ProductDetails = () => {
   // REMOVED: Auto-select first available variant on load
   // We want to show the main product initially
 
+  const defaultVariant = useMemo(() => {
+    if (!selectedProduct?.variants) return null;
+    return selectedProduct.variants.find(v => v._id === selectedProduct.defaultVariantId) || selectedProduct.variants[0];
+  }, [selectedProduct]);
+
   // Determine active images (variant images vs base product images)
   const activeImages = useMemo(() => {
     if (representativeVariant?.images?.length > 0) return representativeVariant.images;
+    if (defaultVariant?.images?.length > 0) return defaultVariant.images;
     return selectedProduct?.images || [];
-  }, [representativeVariant, selectedProduct]);
+  }, [representativeVariant, defaultVariant, selectedProduct]);
 
   // Determine active price
-  const activePrice = representativeVariant?.price || selectedProduct?.price;
+  const activePrice = representativeVariant?.price || defaultVariant?.price || { amount: 0, currency: "INR" };
 
   // Helper to find a representative image for a specific attribute value (e.g. Color)
   const getAttributeImage = (attrName, value) => {
-    const variant = selectedProduct?.variants?.find(v => v.attributes[attrName] === value && v.images?.[0]);
+    const variant = selectedProduct?.variants?.find(v => {
+        const normalizedVariantAttrs = Object.fromEntries(
+            Object.entries(v.attributes || {}).map(([k, val]) => [normalizeKey(k), val])
+        );
+        return normalizedVariantAttrs[attrName] === value && v.images?.[0];
+    });
     return variant?.images?.[0]?.url;
   };
 
@@ -286,10 +307,14 @@ const ProductDetails = () => {
     // Check if any variant matches this hypothetical selection
     // Note: We only check against *other* selected attributes, not the one we are testing
     return selectedProduct.variants.some(v => {
+        const normalizedVariantAttrs = Object.fromEntries(
+            Object.entries(v.attributes || {}).map(([k, val]) => [normalizeKey(k), val])
+        );
+
         return Object.entries(selectedAttributes).every(([key, val]) => {
             if (key === attrName) return true; // ignore the current attribute being tested
-            return v.attributes[key] === val;
-        }) && v.attributes[attrName] === value;
+            return normalizedVariantAttrs[key] === val;
+        }) && normalizedVariantAttrs[attrName] === value;
     });
   };
 
@@ -315,7 +340,9 @@ const ProductDetails = () => {
     setErrorMsg("");
     console.log("Adding to cart:", {
       productId: selectedProduct._id,
-      variant: currentVariant,
+      variantId: currentVariant._id,
+      attributes: currentVariant.attributes,
+      price: currentVariant.price,
       quantity
     });
     // Implementation for cart hook would go here
@@ -367,6 +394,9 @@ const ProductDetails = () => {
               <h1 className="text-4xl md:text-5xl font-serif tracking-tight text-black leading-tight">
                 {selectedProduct.name}
               </h1>
+              <p className="text-sm font-light text-black/80 leading-relaxed tracking-wide">
+                {selectedProduct.description}
+              </p>
               <div className="flex items-center gap-4">
                 <AnimatePresence mode="wait">
                   <motion.span 
@@ -478,9 +508,7 @@ const ProductDetails = () => {
               ))}
             </div>
 
-            <p className="text-sm font-light text-black/60 leading-relaxed tracking-wide">
-              {selectedProduct.description}
-            </p>
+
 
 
             {/* Actions */}
@@ -531,12 +559,7 @@ const ProductDetails = () => {
 
             {/* Information Accordion */}
             <div className="pt-10 border-t border-black/5">
-              <AccordionItem 
-                title="Product Description"
-                isOpen={openSection === 0}
-                onClick={() => setOpenSection(openSection === 0 ? -1 : 0)}
-                content={selectedProduct.description}
-              />
+
               <AccordionItem 
                 title="Materials & Care"
                 isOpen={openSection === 1}
@@ -599,14 +622,16 @@ const ProductDetails = () => {
                 >
                   <div className="relative aspect-[3/4] bg-[#f0f0f0] overflow-hidden mb-6">
                     <img 
-                      src={product.images?.[0]?.url} 
+                      src={product.variants?.[0]?.images?.[0]?.url || product.images?.[0]?.url} 
                       alt={product.name}
                       className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
                     />
                   </div>
                   <div className="space-y-1">
                     <h3 className="text-[11px] font-bold tracking-[0.1em] uppercase">{product.name}</h3>
-                    <p className="text-[10px] text-black/60">{product.price.currency} {product.price.amount}</p>
+                    <p className="text-[10px] text-black/60">
+                      {(product.variants?.[0]?.price?.currency) || "INR"} {(product.variants?.[0]?.price?.amount) || 0}
+                    </p>
                   </div>
                 </div>
               ))}
