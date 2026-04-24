@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
+
 import {
   Search,
   ShoppingBag,
@@ -141,6 +142,32 @@ const SkeletonCard = () => (
   </div>
 );
 
+const HERO_SLIDES = [
+  {
+    image: "/fitfusion_hero.png",
+    title: "THE\nREDESIGN.",
+    subtitle: "Explore the intersection of pure performance and timeless aesthetic. Our new collection defines the modern wardrobe with uncompromised quality."
+  },
+  {
+    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    title: "LUXURY\nFASHION.",
+    subtitle: "Experience the pinnacle of elegance and sophistication. Our premium luxury line is designed for those who demand the best."
+  },
+  {
+    image: "https://plus.unsplash.com/premium_photo-1661775820832-f971657b13f6?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    title: "MODERN\nCLASSICS.",
+    subtitle: "Timeless pieces reimagined for the modern era. Discover the perfect balance of tradition and innovation."
+  }
+];
+
+const BENTO_CATEGORIES = [
+  { name: "Jeans", image: "https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=800&auto=format&fit=crop", spanClass: "md:col-span-2 md:row-span-2" },
+  { name: "Shoes", image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=800&auto=format&fit=crop", spanClass: "md:col-span-2 md:row-span-1" },
+  { name: "T-Shirts", image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800&auto=format&fit=crop", spanClass: "md:col-span-1 md:row-span-1" },
+  { name: "Shorts", image: "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?q=80&w=800&auto=format&fit=crop", spanClass: "md:col-span-1 md:row-span-1" },
+  { name: "Tracksuit", image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1200&auto=format&fit=crop", spanClass: "md:col-span-4 md:row-span-1" }
+];
+
 /**
  * HOME PAGE VIEW
  */
@@ -152,6 +179,7 @@ const Home = () => {
   const [search, setSearch] = useState("");
   const [currencyFilter, setCurrencyFilter] = useState("ALL");
   const [isScrolled, setIsScrolled] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     handleFetchAllProducts();
@@ -161,6 +189,14 @@ const Home = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Auto-slide effect for Hero Carousel
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 5000); // 5-second interval as requested
+    return () => clearInterval(timer);
   }, []);
 
   const filteredProducts = useMemo(() => {
@@ -179,76 +215,112 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-white">
 
-
-      {/* HERO SECTION */}
-      <section className="relative h-[70vh] md:h-screen w-full overflow-hidden bg-white mt-16 md:mt-0 flex items-center">
-        {/* Background Image Layer */}
-        <div
-          className="absolute inset-0 z-0 transition-all duration-1000"
-          style={{
-            backgroundImage: "url('/fitfusion_hero.png')",
-            backgroundPosition: "center right",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "contain",
-          }}
-        />
-
-        {/* Responsive Overlay for Mobile (optional cover) */}
-        <div className="absolute inset-0 z-0 md:hidden"
-          style={{
-            backgroundImage: "url('/fitfusion_hero.png')",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "cover", // Mobile gets cover with center positioning as per prompt requirement
-            opacity: 0.15
-          }}
-        />
-
-        {/* Gradient Overlay for Text Readability */}
-        <div className="absolute inset-0 z-10 bg-gradient-to-r from-white via-white/80 to-transparent md:via-white/40" />
-
-        <Container className="relative z-20 w-full">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
+      {/* PREMIUM SPLIT HERO SECTION WITH CAROUSEL */}
+      <section className="relative h-[100vh] w-full bg-white flex flex-col md:flex-row mt-16 md:mt-0 overflow-hidden">
+        
+        <AnimatePresence mode="wait">
+          {/* Left Side: Content */}
+          <motion.div 
+            key={`content-${currentSlide}`}
+            initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1, delay: 0.2 }}
-            className="max-w-xl text-center md:text-left mx-auto md:mx-0"
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 1, ease: [0.25, 0.1, 0.25, 1] }}
+            className="w-full md:w-1/2 h-[50vh] md:h-full flex items-center justify-center p-8 md:p-20 relative z-10 bg-white"
           >
-            <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-black/40 mb-4 block">
-              Spring / Summer 2026
-            </span>
-            <h1 className="text-6xl md:text-8xl font-serif leading-none tracking-tighter text-black mb-6">
-              THE<br />REDESIGN.
-            </h1>
-            <p className="text-sm md:text-base text-black/70 font-light max-w-md mb-10 leading-relaxed tracking-wide mx-auto md:mx-0">
-              Explore the intersection of pure performance and timeless aesthetic.
-              Our new collection defines the modern wardrobe with uncompromised quality.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-6">
+            <div className="max-w-md w-full">
+              <span className="inline-block text-[10px] font-bold tracking-[0.4em] uppercase text-black/40 mb-6">
+                Spring / Summer 2026
+              </span>
+              <h1 className="text-6xl md:text-8xl font-serif leading-[0.9] tracking-tighter text-black mb-8 whitespace-pre-line">
+                {HERO_SLIDES[currentSlide].title}
+              </h1>
+              <p className="text-sm md:text-base text-black/60 font-light mb-12 leading-relaxed tracking-wide">
+                {HERO_SLIDES[currentSlide].subtitle}
+              </p>
               <Button
                 onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
-                className="bg-black text-white px-12 py-5 rounded-none text-[10px] tracking-[0.2em] font-bold uppercase hover:bg-black/80 transition-all w-full sm:w-auto"
+                className="bg-black text-white px-14 py-5 rounded-none text-[10px] tracking-[0.25em] font-bold uppercase transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:bg-black/90 w-full sm:w-auto"
               >
                 Shop Now
               </Button>
-              <button className="group flex items-center gap-3 text-[10px] tracking-[0.2em] font-bold uppercase py-2">
-                Lookbook <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-              </button>
             </div>
           </motion.div>
-        </Container>
+        </AnimatePresence>
 
-        {/* Scroll Indicator (Hidden on mobile for space) */}
-        <div className="absolute bottom-10 left-10 z-20 hidden md:flex flex-col items-center gap-4">
-          <div className="w-px h-16 bg-black/10 relative overflow-hidden">
-            <motion.div
-              animate={{ y: [0, 64] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="absolute top-0 left-0 w-full h-1/2 bg-black/40"
+        <AnimatePresence mode="wait">
+          {/* Right Side: Image */}
+          <motion.div 
+            key={`image-${currentSlide}`}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 50 }}
+            transition={{ duration: 1, ease: [0.25, 0.1, 0.25, 1] }}
+            className="w-full md:w-1/2 h-[50vh] md:h-full relative overflow-hidden group"
+          >
+            <motion.img 
+              initial={{ scale: 1.1 }}
+              animate={{ scale: 1 }}
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              src={HERO_SLIDES[currentSlide].image} 
+              alt="Fashion Model"
+              className="w-full h-full object-cover object-center"
             />
-          </div>
-          <span className="text-[8px] font-bold tracking-widest uppercase vertical-text text-black/20">Scroll</span>
+            {/* Subtle gradient overlay (right to left fade) */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/10 mix-blend-multiply pointer-events-none" />
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Carousel Indicators */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+          {HERO_SLIDES.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`w-2 h-2 rounded-full transition-all duration-500 ${currentSlide === idx ? 'bg-black w-8' : 'bg-black/20 hover:bg-black/40'}`}
+            />
+          ))}
         </div>
+      </section>
+
+      {/* BENTO CATEGORY SECTION */}
+      <section className="py-24 bg-[#fafafa]">
+        <Container>
+          <div className="mb-16 text-center md:text-left">
+            <h2 className="text-3xl md:text-5xl font-serif text-black mb-4">The Collections</h2>
+            <p className="text-xs text-[#888] font-light uppercase tracking-widest">Curated essentials for your wardrobe</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 auto-rows-[250px] gap-4 md:gap-6">
+            {BENTO_CATEGORIES.map((cat, idx) => (
+              <motion.div
+                key={cat.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.6, delay: idx * 0.1 }}
+                onClick={() => navigate(`/category/${cat.name.toLowerCase()}`)}
+                className={`group relative rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-2xl transition-all duration-500 bg-neutral-100 ${cat.spanClass}`}
+              >
+                <motion.img 
+                  src={cat.image} 
+                  alt={cat.name}
+                  className="w-full h-full object-cover transition-transform duration-1000 ease-[0.25,1,0.5,1] group-hover:scale-105"
+                />
+                
+                {/* Subtle Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-70 group-hover:opacity-90 transition-opacity duration-500" />
+                
+                <div className="absolute bottom-0 left-0 p-8 w-full">
+                  <h3 className="text-white text-2xl font-serif tracking-wide transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 opacity-90 group-hover:opacity-100">
+                    {cat.name}
+                  </h3>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </Container>
       </section>
 
       {/* PRODUCT GRID SECTION */}
