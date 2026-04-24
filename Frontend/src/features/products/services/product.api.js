@@ -65,3 +65,13 @@ export async function addProductVariety(productId,formData){
         throw error;
     }
 }
+
+export async function getProductByCategory(category) {
+    try{
+        const response = await productApiInstance.get(`/category/${category}`)
+        return response.data
+    }catch(error){
+        console.log(error);
+        throw error;
+    }
+}

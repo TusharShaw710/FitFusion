@@ -1,15 +1,15 @@
-import { getSellerProducts, createProduct, deleteProduct,getAllProducts,getProductById,addProductVariety } from "../services/product.api";
+import { getSellerProducts, createProduct, deleteProduct,getAllProducts,getProductById,addProductVariety,getProductByCategory } from "../services/product.api";
 import { useDispatch, useSelector } from "react-redux";
-import { setProducts, setLoading, setError,setAllProducts, setSelectedProduct } from "../product.slice.js";
+import { setProducts, setLoading, setError,setAllProducts, setSelectedProduct,setProductByCategory } from "../product.slice.js";
 import { useToast } from "../../ui/toast/useToast";
 
 
 export const useProduct=()=>{
     const dispatch=useDispatch();
-    const {products,loading,error,selectedProduct}=useSelector((state)=>state.product);
+    const {products,loading,error,selectedProduct,productByCategory}=useSelector((state)=>state.product);
     const { showToast } = useToast();
 
-    const handleFetchSellerProducts=async()=>{
+    const handleFetchSellerProducts=async()=>{  
         dispatch(setLoading(true));
         try {
             const response=await getSellerProducts();
@@ -96,16 +96,33 @@ export const useProduct=()=>{
             dispatch(setLoading(false));
         }
     }
+
+    const handleGetProductByCategory=async(category)=>{
+        dispatch(setLoading(true));
+        try {
+            const response=await getProductByCategory(category);
+            dispatch(setProductByCategory(response.products));
+            
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }finally{
+            dispatch(setLoading(false));
+        }
+
+    }
     return {
         products,
         loading,
         error,
         selectedProduct,
+        productByCategory,
         handleFetchSellerProducts,
         handleCreateProduct,
         handleDeleteProduct,
         handleFetchAllProducts,
         handleGetProductById,
-        handleAddProductVariety
+        handleAddProductVariety,
+        handleGetProductByCategory
     };
 }

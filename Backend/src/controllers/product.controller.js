@@ -195,5 +195,34 @@ export async function addProductVarietyController(req,res){
         return res.status(500).json({ message: "Server error", success: false });
     }
 }
+
+export async function getProductByCategory(req,res){
+    const {category}=req.params;
+    
+    if(!category){
+      return res.status(404).json({
+        message:"Category is not Provided",
+        success:false
+      })
+    }
+    try{
+        const products=await productModel.find({category:category});
+        if(products.length==0){
+          return res.status(404).json({
+            message:"No products are present in this Category",
+            success:false
+          })
+        }else{
+          return res.status(200).json({
+            message:"Products fetched successfully",
+            success:true,
+            products:products
+          });
+        }
+    }catch(error){
+        console.log(error);
+        return res.status(500).json({message:"Server error",success:false});
+    }
+}
             
     

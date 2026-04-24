@@ -6,6 +6,7 @@ const productSlice=createSlice({
     initialState:{
         products:[],
         allProducts:[],
+        productByCategory:[],
         selectedProduct:null, // For detail views
         loading:false,
         error:null
@@ -25,9 +26,12 @@ const productSlice=createSlice({
         },
         setAllProducts: (state, action) => {
             state.allProducts = action.payload
+        },
+        setProductByCategory:(state,action)=>{
+            state.productByCategory=action.payload;
         }
     }
 });
 
-export const {setProducts,setSelectedProduct,setLoading,setError,setAllProducts}=productSlice.actions;
+export const {setProducts,setSelectedProduct,setLoading,setError,setAllProducts,setProductByCategory}=productSlice.actions;
 export default productSlice.reducer;

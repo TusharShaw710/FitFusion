@@ -20,6 +20,7 @@ import InlineLoader from '../../ui/InlineLoader.jsx';
 
 // Stitch UI Primitives
 import Button from '../../ui/Button.jsx';
+import { ProductCardSkeleton } from '../../ui/Skeleton.jsx';
 
 /**
  * STITCH PRIMITIVES
@@ -219,7 +220,7 @@ const AccordionItem = ({ title, content, isOpen, onClick }) => (
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { selectedProduct, loading, handleGetProductById, allProducts, handleFetchAllProducts } = useProduct();
+  const { selectedProduct, loading, handleGetProductById, allProducts, handleFetchAllProducts, handleGetProductByCategory, productByCategory } = useProduct();
   
   const [quantity, setQuantity] = useState(1);
   const [openSection, setOpenSection] = useState(0); // 0 for Description
@@ -362,12 +363,77 @@ const ProductDetails = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
-  const relatedProducts = useMemo(() => {
-    if (!allProducts || !selectedProduct) return [];
-    return allProducts
-      .filter(p => p._id !== selectedProduct._id)
-      .slice(0, 4);
-  }, [allProducts, selectedProduct]);
+  useEffect(() => {
+    if (selectedProduct?.category) {
+      handleGetProductByCategory(selectedProduct.category);
+    }
+  }, [selectedProduct?.category]);
+
+  const suggestions = useMemo(() => {
+    if (!productByCategory || productByCategory.length === 0) return [];
+    
+    // Step 2: Remove current product
+    const filtered = productByCategory.filter(p => p._id !== selectedProduct?._id);
+
+    // Step 3: Stable Random Shuffle
+    const shuffled = filtered
+      .map(p => ({ p, sort: Math.random() }))
+      .sort((a, b) => a.sort - b.sort)
+      .map(({ p }) => p);
+
+    // Step 4: Limit to 5
+    return shuffled.slice(0, 5);
+  }, [productByCategory, selectedProduct?._id]);
+
+  const SuggestionCard = ({ product, index }) => {
+    const navigate = useNavigate();
+    
+    // Variant Logic
+    const defaultVariant = product.variants.find(
+      v => v._id === product.defaultVariantId
+    ) || product.variants[0];
+
+    const price = defaultVariant?.price || { amount: 0, currency: "INR" };
+    const image = defaultVariant?.images?.[0]?.url || product.images?.[0]?.url;
+
+    return (
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: index * 0.1 }}
+        onClick={() => {
+          navigate(`/product/${product._id}`);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        className="group cursor-pointer flex-shrink-0 w-[280px] md:w-auto"
+      >
+        <div className="relative aspect-[4/5] bg-[#f7f7f7] overflow-hidden mb-6 shadow-sm transition-all duration-500 group-hover:shadow-xl group-hover:-translate-y-1">
+          <img 
+            src={image} 
+            alt={product.name}
+            className="w-full h-full object-cover grayscale-[10%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ease-out"
+          />
+          
+          {/* Quick Add Overlay (Premium) */}
+          <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
+             <button className="bg-white text-black text-[9px] font-bold uppercase tracking-[0.2em] px-6 py-3 shadow-2xl hover:bg-black hover:text-white transition-all transform translate-y-4 group-hover:translate-y-0 duration-500">
+               Quick View
+             </button>
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <h3 className="text-[11px] font-bold tracking-[0.15em] uppercase text-black/80 group-hover:text-black transition-colors">
+            {product.name}
+          </h3>
+          <p className="text-[10px] font-light tracking-widest text-black/50">
+            {price.currency} {price.amount}
+          </p>
+        </div>
+      </motion.div>
+    );
+  };
 
   if (loading && !selectedProduct) {
     return (
@@ -599,49 +665,63 @@ const ProductDetails = () => {
         </div>
       </Container>
 
-      {/* RELATED PRODUCTS */}
-      {relatedProducts.length > 0 && (
-        <section className="py-32 border-t border-black/5 bg-[#fafafa]">
+      {/* YOU MAY ALSO LIKE SECTION */}
+      {(loading || suggestions.length > 0) && (
+        <section className="py-32 border-t border-black/5 bg-white overflow-hidden">
           <Container>
-            <div className="flex items-end justify-between mb-20">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16 md:mb-24">
               <div className="space-y-4">
-                <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-black/40">Discover</span>
-                <h2 className="text-4xl font-serif text-black">Others Also Viewed</h2>
+                <motion.span 
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  className="text-[10px] font-bold tracking-[0.4em] uppercase text-black/30"
+                >
+                  Curated for you
+                </motion.span>
+                <motion.h2 
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 }}
+                  className="text-4xl md:text-5xl font-serif text-black leading-tight"
+                >
+                  You may also like
+                </motion.h2>
               </div>
-              <Button 
-                onClick={() => navigate('/')}
-                className="text-[10px] tracking-[0.2em] font-bold uppercase border-b border-black pb-1 px-0 bg-transparent hover:text-black/40 transition-all"
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
               >
-                View Collection
-              </Button>
+                <Button 
+                  onClick={() => navigate('/')}
+                  className="text-[10px] text-black tracking-[0.3em] font-bold uppercase border-b border-black/20 pb-2 px-0 bg-transparent hover:border-black transition-all rounded-none"
+                >
+                  View All Styles
+                </Button>
+              </motion.div>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {relatedProducts.map((product) => (
-                <div 
-                  key={product._id}
-                  onClick={() => {
-                    navigate(`/product/${product._id}`);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="group cursor-pointer"
-                >
-                  <div className="relative aspect-[3/4] bg-[#f0f0f0] overflow-hidden mb-6">
-                    <img 
-                      src={product.variants?.[0]?.images?.[0]?.url || product.images?.[0]?.url} 
-                      alt={product.name}
-                      className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-[11px] font-bold tracking-[0.1em] uppercase">{product.name}</h3>
-                    <p className="text-[10px] text-black/60">
-                      {(product.variants?.[0]?.price?.currency) || "INR"} {(product.variants?.[0]?.price?.amount) || 0}
-                    </p>
-                  </div>
+            {loading ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+                {[...Array(5)].map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="relative">
+                {/* Mobile: Horizontal Scroll | Desktop: Grid */}
+                <div className="flex md:grid md:grid-cols-5 gap-8 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-8 -mx-6 px-6 md:mx-0 md:px-0">
+                  {suggestions.map((product, idx) => (
+                    <div key={product._id} className="snap-center">
+                      <SuggestionCard product={product} index={idx} />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </Container>
         </section>
       )}
