@@ -6,7 +6,7 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20"
 import config from "./config/config.js"
 import productRoutes from "./routes/product.routes.js"
-
+import cartRoutes from "./routes/cart.routes.js"
 
 const app = express();
 
@@ -28,10 +28,12 @@ passport.use(new GoogleStrategy({
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products',productRoutes);
+app.use('/api/cart',cartRoutes);
 // Base Route
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to FitFusion API' });
 });
+
 
 // Health check route
 app.get('/health', (req, res) => {
