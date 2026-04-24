@@ -1,10 +1,12 @@
 import { register,login,getMe } from "../services/auth.api";
 import { useDispatch } from "react-redux";
 import { setUser,setLoading,setError } from "../auth.slice";
+import { useToast } from "../../ui/toast/useToast";
 
 export function useAuth(){
 
     const dispatch = useDispatch();
+    const { showToast } = useToast();
 
     const registerUser=async ({email,contact,password,fullname,isSeller})=>{
         dispatch(setLoading(true));
@@ -13,6 +15,7 @@ export function useAuth(){
             dispatch(setUser(response.user));
             return response.user;
         } catch (error) {
+            showToast({ message: error.response?.data?.message || "Failed to register", type: 'error' });
             throw error;
         }finally{
             dispatch(setLoading(false));
@@ -26,6 +29,7 @@ export function useAuth(){
             dispatch(setUser(response.user));
             return response.user;
         } catch (error) {
+            showToast({ message: error.response?.data?.message || "Failed to login", type: 'error' });
             throw error;
         }finally{
             dispatch(setLoading(false));

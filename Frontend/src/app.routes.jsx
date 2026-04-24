@@ -13,7 +13,9 @@ import CartItems from "./features/cart/pages/CartItems";
 export const router = createBrowserRouter([
     {
         path: "/",
-        element: <Home/>,
+        element: <Protected role="buyer">
+                    <Home />
+                </Protected>,
     },
     {
         path: "/login",

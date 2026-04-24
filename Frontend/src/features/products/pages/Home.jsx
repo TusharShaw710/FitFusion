@@ -16,8 +16,10 @@ import {
 
 // Hooks & UI
 import { useProduct } from '../hooks/useProduct';
+import { useCart } from '../../cart/hook/useCart';
 import Button from '../../ui/Button.jsx';
 import NavBar from '../components/NavBar.jsx';
+import InlineLoader from '../../ui/InlineLoader.jsx';
 
 /**
  * STITCH PRIMITIVES
@@ -39,7 +41,29 @@ const Grid = ({ children, className = "" }) => (
  */
 const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [added, setAdded] = useState(false);
   const navigate = useNavigate();
+  const { addToCart } = useCart();
+
+  const handleQuickAdd = async (e) => {
+    e.stopPropagation();
+    if (!product.variants || product.variants.length === 0) return;
+    
+    // Fallback to first variant if default is not available
+    const defaultVariant = product.variants.find(v => v._id === product.defaultVariantId) || product.variants[0];
+    
+    setIsAdding(true);
+    try {
+      await addToCart(product._id, defaultVariant._id, 1);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000); // Reset after 2s
+    } catch (error) {
+      console.error("Failed to quick add", error);
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   return (
     <motion.div 
@@ -74,8 +98,13 @@ const ProductCard = ({ product }) => {
               exit={{ y: 10, opacity: 0 }}
               className="absolute bottom-0 left-0 right-0 p-4"
             >
-              <Button className="w-full bg-black text-white py-4 rounded-none text-[10px] tracking-[0.2em] font-bold uppercase transition-all hover:bg-black/90">
-                Quick Add
+              <Button 
+                id="quickAddX"
+                onClick={handleQuickAdd}
+                disabled={isAdding}
+                className="w-full bg-black text-white py-4 rounded-none text-[10px] tracking-[0.2em] font-bold uppercase transition-all hover:bg-black/90 flex items-center justify-center gap-2 disabled:bg-black/70"
+              >
+                {isAdding ? <InlineLoader color="white" /> : added ? "Added" : "Quick Add"}
               </Button>
             </motion.div>
           )}

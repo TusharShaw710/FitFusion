@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useCart } from '../../cart/hook/useCart';
 
 const Container = ({ children, className = "" }) => (
   <div className={`max-w-[1440px] mx-auto px-6 md:px-12 lg:px-20 ${className}`}>
@@ -22,14 +24,21 @@ const Container = ({ children, className = "" }) => (
 const NavBar = () => {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
+    const { cartItems, fetchCart } = useCart();
 
     useEffect(() => {
+        fetchCart().catch(console.error);
+
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 50);
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    const cartCount = Array.isArray(cartItems) 
+        ? cartItems.reduce((acc, item) => acc + item.quantity, 0) 
+        : 0;
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${isScrolled ? 'bg-white/80 backdrop-blur-xl border-b border-black/5 py-4' : 'bg-transparent py-8'}`}>
@@ -52,10 +61,27 @@ const NavBar = () => {
             <button className="flex items-center gap-2 text-black/60 hover:text-black transition-colors">
               <Search size={18} strokeWidth={1.5} />
             </button>
-            <button className="flex items-center gap-2 text-black/60 hover:text-black transition-colors relative">
+            <motion.button 
+              onClick={() => navigate("/cart")}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 text-black/60 hover:text-black transition-colors relative"
+            >
               <ShoppingBag size={18} strokeWidth={1.5} />
-              <span className="absolute -top-1 -right-1.5 w-3.5 h-3.5 bg-black text-white text-[8px] flex items-center justify-center rounded-full">0</span>
-            </button>
+              <AnimatePresence>
+                {cartCount > 0 && (
+                  <motion.span 
+                    key={cartCount}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    className="absolute -top-1.5 -right-2 w-4 h-4 bg-red-600 text-white text-[9px] font-bold flex items-center justify-center rounded-full shadow-sm"
+                  >
+                    {cartCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
             <button 
               onClick={() => navigate("/login")}
               className="flex items-center gap-2 text-black/60 hover:text-black transition-colors"

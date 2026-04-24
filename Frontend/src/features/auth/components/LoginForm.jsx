@@ -5,6 +5,7 @@ import Input from "../../ui/Input.jsx";
 import Button from "../../ui/Button.jsx";
 import Divider from "../../ui/Divider.jsx";
 import { useAuth } from "../hook/useAuth.js";
+import { useSelector } from "react-redux";
 
 // ── Stagger config ────────────────────────────────────────────────────────────
 const container = {
@@ -45,7 +46,7 @@ export default function LoginForm() {
   const [form, setForm] = useState({ identifier: "", password: ""});
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState({});
-  const [loading, setLoading] = useState(false);
+  const loading=useSelector((state)=>state.auth.loading);
   const [submitted, setSubmitted] = useState(false);
   const {loginUser} = useAuth();
 
@@ -74,16 +75,15 @@ export default function LoginForm() {
     const e2 = validate("password", form.password);
     if (e1 || e2) return;
 
-    setLoading(true);
-    // Simulate API call
+  
     const user=await loginUser(form);
-    setLoading(false);
-    console.log(user);
-    if(user.role=="seller"){
+    if(user &&user.role=="seller"){
         navigate("/dashboard");
-    }else{
+    }else if(user && user.role=="buyer"){
         navigate("/");
     }
+    setSubmitted(false);
+    setForm({ identifier: "", password: ""});
   };
 
   return (

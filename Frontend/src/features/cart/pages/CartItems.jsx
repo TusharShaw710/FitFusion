@@ -70,10 +70,11 @@ const CartItems = () => {
             {cartItems.map((item) => (
               <CartItemCard 
                 key={`${item.product._id}-${item.variant}`}
+                onClick={()=>navigate(`/product/${item.product._id}`)}
                 item={item} 
                 onIncrement={() => incrementCartItemQuantity(item.product._id, item.variant)}
                 onDecrement={() => decrementCartItemQuantity(item.product._id, item.variant)}
-                onRemove={() => removeFromCart(item.product._id, item.variant)}
+                onRemove={() => removeFromCart(item.variant)}
               />
             ))}
           </AnimatePresence>
@@ -110,7 +111,6 @@ const CartItems = () => {
               onClick={() => navigate('/checkout')}
             >
               <span className="relative z-10 font-medium">Proceed to Checkout</span>
-              <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
               <div className="absolute inset-0 bg-gradient-to-r from-neutral-800 to-black opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </Button>
 
@@ -124,7 +124,7 @@ const CartItems = () => {
   );
 };
 
-const CartItemCard = ({ item, onIncrement, onDecrement, onRemove }) => {
+const CartItemCard = ({ item, onClick , onIncrement, onDecrement, onRemove }) => {
   // Extract variant logic: match item.variant with product.variants._id
   const selectedVariant = item.product.variants.find(v => v._id === item.variant);
   const imageUrl = selectedVariant?.images?.[0]?.url || item.product.images?.[0]?.url;
@@ -139,6 +139,7 @@ const CartItemCard = ({ item, onIncrement, onDecrement, onRemove }) => {
       whileHover={{ y: -4 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className="group bg-white p-6 rounded-2xl flex gap-8 items-center border border-neutral-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] transition-all duration-500"
+      onClick={onClick}
     >
       {/* Product Image */}
       <div className="w-40 h-52 bg-neutral-100 rounded-xl overflow-hidden flex-shrink-0 relative cursor-pointer">
@@ -162,7 +163,10 @@ const CartItemCard = ({ item, onIncrement, onDecrement, onRemove }) => {
             </h3>
           </div>
           <button 
-            onClick={onRemove}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
             className="p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-300 group/remove"
           >
             <Trash2 size={20} className="group-hover/remove:scale-110 transition-transform" />
@@ -186,7 +190,10 @@ const CartItemCard = ({ item, onIncrement, onDecrement, onRemove }) => {
           {/* Quantity Controls */}
           <div className="flex items-center bg-neutral-50 rounded-full p-1 border border-neutral-100">
             <button 
-              onClick={onDecrement}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDecrement();
+              }}
               disabled={item.quantity <= 1}
               className={`p-2 rounded-full transition-all ${item.quantity <= 1 ? 'text-neutral-200 cursor-not-allowed' : 'text-neutral-600 hover:bg-white hover:shadow-sm'}`}
             >
@@ -196,7 +203,10 @@ const CartItemCard = ({ item, onIncrement, onDecrement, onRemove }) => {
               {item.quantity}
             </span>
             <button 
-              onClick={onIncrement}
+              onClick={(e) => {
+                e.stopPropagation();
+                onIncrement();
+              }}
               className="p-2 rounded-full text-neutral-600 hover:bg-white hover:shadow-sm transition-all"
             >
               <Plus size={16} />
@@ -226,7 +236,7 @@ const EmptyCart = () => {
       </p>
       <Button 
         onClick={() => navigate('/products')}
-        className="px-12 py-4 bg-black text-white rounded-full hover:bg-neutral-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 font-medium tracking-wide uppercase text-xs"
+        className="px-12 py-4 bg-black text-white rounded-full hover:bg-neutral-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 font-medium tracking-wide uppercase text-xs w-auto"
       >
         Shop Now
       </Button>
@@ -234,21 +244,5 @@ const EmptyCart = () => {
   );
 };
 
-const CartSkeleton = () => (
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div className="h-6 w-32 bg-neutral-100 rounded mb-8 animate-pulse" />
-    <div className="h-12 w-64 bg-neutral-100 rounded mb-12 animate-pulse" />
-    <div className="flex flex-col lg:flex-row gap-16">
-      <div className="lg:w-[70%] space-y-8">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="h-56 bg-neutral-50 rounded-2xl animate-pulse" />
-        ))}
-      </div>
-      <div className="lg:w-[30%]">
-        <div className="h-96 bg-neutral-50 rounded-2xl animate-pulse" />
-      </div>
-    </div>
-  </div>
-);
 
 export default CartItems;

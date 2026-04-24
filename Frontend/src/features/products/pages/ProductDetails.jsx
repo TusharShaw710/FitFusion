@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { useProduct } from '../hooks/useProduct';
 import NavBar from '../components/NavBar.jsx';
+import { useCart } from '../../cart/hook/useCart';
+import InlineLoader from '../../ui/InlineLoader.jsx';
 
 // Stitch UI Primitives
 import Button from '../../ui/Button.jsx';
@@ -227,6 +229,10 @@ const ProductDetails = () => {
   // Variant State
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [errorMsg, setErrorMsg] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+
+  const { addToCart } = useCart();
   
   const normalizeKey = (key) => key.trim().charAt(0).toUpperCase() + key.trim().slice(1).toLowerCase();
 
@@ -322,7 +328,7 @@ const ProductDetails = () => {
   const isOutOfStock = currentVariant ? currentVariant.stock === 0 : false;
   const isLowStock = currentVariant ? currentVariant.stock > 0 && currentVariant.stock < 5 : false;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     // Validate all attributes selected
     const requiredKeys = Object.keys(availableAttributes);
     const selectedKeys = Object.keys(selectedAttributes);
@@ -338,14 +344,16 @@ const ProductDetails = () => {
     }
 
     setErrorMsg("");
-    console.log("Adding to cart:", {
-      productId: selectedProduct._id,
-      variantId: currentVariant._id,
-      attributes: currentVariant.attributes,
-      price: currentVariant.price,
-      quantity
-    });
-    // Implementation for cart hook would go here
+    setIsAdding(true);
+    try {
+      await addToCart(selectedProduct._id, currentVariant._id, quantity);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000); // Reset after 2s
+    } catch (error) {
+      setErrorMsg("Failed to add to cart");
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   useEffect(() => {
@@ -535,11 +543,11 @@ const ProductDetails = () => {
               <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-4">
                   <Button 
-                    disabled={isOutOfStock}
+                    disabled={isOutOfStock || isAdding}
                     onClick={handleAddToCart}
-                    className={`flex-1 ${isOutOfStock ? 'bg-gray-200 cursor-not-allowed' : 'bg-black'} text-white py-6 rounded-none text-[10px] tracking-[0.3em] font-bold uppercase transition-all hover:bg-black/80`}
+                    className={`flex-1 ${isOutOfStock ? 'bg-gray-200 cursor-not-allowed' : 'bg-black'} text-white py-6 rounded-none text-[10px] tracking-[0.3em] font-bold uppercase transition-all hover:bg-black/80 flex items-center justify-center gap-2`}
                   >
-                    {isOutOfStock ? 'Sold Out' : 'Add to Shopping Bag'}
+                    {isAdding ? <InlineLoader color="white" /> : added ? "Added" : isOutOfStock ? 'Sold Out' : 'Add to Shopping Bag'}
                   </Button>
                   <button className="p-5 border border-black/10 hover:bg-black hover:text-white transition-all duration-300">
                     <Heart size={18} strokeWidth={1.5} />

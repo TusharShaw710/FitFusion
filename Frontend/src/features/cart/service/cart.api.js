@@ -20,7 +20,7 @@ export const fetchCartApi=async()=>{
 export const addToCartApi=async(productId,variantId,quantity=1)=>{
     try{
 
-        const response=await cartInstanceApi.post(`/${productId}/variant/${variantId}`,{quantity});
+        const response=await cartInstanceApi.post(`/add/${productId}/${variantId}`,{quantity});
 
         return response.data;
         
@@ -49,9 +49,9 @@ export const decrementCartItemQuantityApi=async(productId,variantId)=>{
     }
 }
 
-export const removeFromCartApi=async(productId,variantId)=>{
+export const removeFromCartApi=async(variantId)=>{
     try{
-        const response=await cartInstanceApi.delete(`/${productId}/variant/${variantId}`);
+        const response=await cartInstanceApi.delete(`/remove/${variantId}`);
 
         return response.data;
     }catch(error){

@@ -1,11 +1,13 @@
 import { getSellerProducts, createProduct, deleteProduct,getAllProducts,getProductById,addProductVariety } from "../services/product.api";
 import { useDispatch, useSelector } from "react-redux";
 import { setProducts, setLoading, setError,setAllProducts, setSelectedProduct } from "../product.slice.js";
+import { useToast } from "../../ui/toast/useToast";
 
 
 export const useProduct=()=>{
     const dispatch=useDispatch();
     const {products,loading,error,selectedProduct}=useSelector((state)=>state.product);
+    const { showToast } = useToast();
 
     const handleFetchSellerProducts=async()=>{
         dispatch(setLoading(true));
@@ -28,8 +30,10 @@ export const useProduct=()=>{
         try {
             const response=await createProduct(formData);
             dispatch(setProducts(response.products));
+            showToast({ message: response.message, type: 'success' });
             
         } catch (error) {
+            showToast({ message: error.response?.data?.message || "Failed to create product", type: 'error' });
             console.log(error);
             throw error;
         }finally{
@@ -40,10 +44,11 @@ export const useProduct=()=>{
     const handleDeleteProduct=async(productId)=>{
         dispatch(setLoading(true));
         try {
-            await deleteProduct(productId);
-            // Refresh products
+            const response=await deleteProduct(productId);
             await handleFetchSellerProducts();
+            showToast({ message: response.message, type: 'success' });
         } catch (error) {
+            showToast({ message: error.response?.data?.message || "Failed to delete product", type: 'error' });
             console.log(error);
             throw error;
         } finally {

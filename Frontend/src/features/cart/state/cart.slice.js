@@ -29,9 +29,9 @@ const cartSlice= createSlice({
             }
         },
         removeFromCart:(state,action)=>{
-            const {productId,variantId}=action.payload;
+            const {variantId}=action.payload;
             state.cartItems=state.cartItems.filter(
-                item => (item.product._id !== productId && item.product !== productId) || item.variant !== variantId
+                item => item.variant !== variantId
             )
         }
     }
