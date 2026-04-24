@@ -15,7 +15,6 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { useProduct } from '../hooks/useProduct';
-import NavBar from '../components/NavBar.jsx';
 import { useCart } from '../../cart/hook/useCart';
 import InlineLoader from '../../ui/InlineLoader.jsx';
 
@@ -75,7 +74,6 @@ const ImageGallery = ({ images }) => {
   return (
     
     <div className="flex flex-col-reverse lg:flex-row gap-6">
-      <NavBar/>
       {/* Thumbnails */}
       <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-visible no-scrollbar pb-4 lg:pb-0">
         {images.map((img, idx) => (

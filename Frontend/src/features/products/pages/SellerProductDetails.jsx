@@ -18,7 +18,6 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useProduct } from '../hooks/useProduct';
-import NavBar from '../components/NavBar.jsx';
 import ImageUploadArea from '../components/ImageUploadArea.jsx';
 
 // UI Components
@@ -489,8 +488,6 @@ const SellerProductDetails = () => {
 
     return (
         <div className="min-h-screen bg-[#faf9f6]">
-            <NavBar />
-            
             {/* Header / Breadcrumbs */}
             <header className="pt-32 pb-12 bg-white">
                 <Container className="flex items-center justify-between">

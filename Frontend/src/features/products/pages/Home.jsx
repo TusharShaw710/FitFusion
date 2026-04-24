@@ -2,13 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
-import { 
-  Search, 
-  ShoppingBag, 
-  User, 
-  ChevronRight, 
-  ArrowRight, 
-  Filter, 
+import {
+  Search,
+  ShoppingBag,
+  User,
+  ChevronRight,
+  ArrowRight,
+  Filter,
   Package,
   Heart,
   Plus
@@ -18,7 +18,7 @@ import {
 import { useProduct } from '../hooks/useProduct';
 import { useCart } from '../../cart/hook/useCart';
 import Button from '../../ui/Button.jsx';
-import NavBar from '../components/NavBar.jsx';
+import NavBar from '../../ui/NavBar.jsx';
 import InlineLoader from '../../ui/InlineLoader.jsx';
 
 /**
@@ -49,10 +49,10 @@ const ProductCard = ({ product }) => {
   const handleQuickAdd = async (e) => {
     e.stopPropagation();
     if (!product.variants || product.variants.length === 0) return;
-    
+
     // Fallback to first variant if default is not available
     const defaultVariant = product.variants.find(v => v._id === product.defaultVariantId) || product.variants[0];
-    
+
     setIsAdding(true);
     try {
       await addToCart(product._id, defaultVariant._id, 1);
@@ -66,7 +66,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -76,14 +76,14 @@ const ProductCard = ({ product }) => {
       onClick={() => navigate(`/product/${product._id}`)}
     >
       <div className="relative aspect-[4/5] bg-[#f7f7f7] overflow-hidden mb-6">
-        <motion.img 
+        <motion.img
           src={product.variants?.[0]?.images?.[0]?.url || product.images?.[0]?.url || "https://images.unsplash.com/photo-1539106609512-725e3652e361?q=80&w=1000&auto=format&fit=crop"}
           alt={product.name}
           animate={{ scale: isHovered ? 1.05 : 1 }}
           transition={{ duration: 0.8, ease: [0.33, 1, 0.68, 1] }}
           className="w-full h-full object-cover"
         />
-        
+
         {/* Heart Icon */}
         <button className="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-black hover:text-white">
           <Heart size={16} />
@@ -92,13 +92,13 @@ const ProductCard = ({ product }) => {
         {/* Quick Add Button */}
         <AnimatePresence>
           {isHovered && (
-            <motion.div 
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 10, opacity: 0 }}
               className="absolute bottom-0 left-0 right-0 p-4"
             >
-              <Button 
+              <Button
                 id="quickAddX"
                 onClick={handleQuickAdd}
                 disabled={isAdding}
@@ -155,7 +155,7 @@ const Home = () => {
 
   useEffect(() => {
     handleFetchAllProducts();
-    
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
@@ -166,25 +166,24 @@ const Home = () => {
   const filteredProducts = useMemo(() => {
     if (!allProducts) return [];
     return allProducts.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
-                            p.description.toLowerCase().includes(search.toLowerCase());
-      
+      const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.description.toLowerCase().includes(search.toLowerCase());
+
       const productPrice = p.variants?.[0]?.price;
       const matchesCurrency = currencyFilter === "ALL" || productPrice?.currency === currencyFilter;
-      
+
       return matchesSearch && matchesCurrency;
     });
   }, [allProducts, search, currencyFilter]);
 
   return (
     <div className="min-h-screen bg-white">
-      {/* NAVBAR */}
-      <NavBar/>
+
 
       {/* HERO SECTION */}
       <section className="relative h-[70vh] md:h-screen w-full overflow-hidden bg-white mt-16 md:mt-0 flex items-center">
         {/* Background Image Layer */}
-        <div 
+        <div
           className="absolute inset-0 z-0 transition-all duration-1000"
           style={{
             backgroundImage: "url('/fitfusion_hero.png')",
@@ -193,7 +192,7 @@ const Home = () => {
             backgroundSize: "contain",
           }}
         />
-        
+
         {/* Responsive Overlay for Mobile (optional cover) */}
         <div className="absolute inset-0 z-0 md:hidden"
           style={{
@@ -209,7 +208,7 @@ const Home = () => {
         <div className="absolute inset-0 z-10 bg-gradient-to-r from-white via-white/80 to-transparent md:via-white/40" />
 
         <Container className="relative z-20 w-full">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, delay: 0.2 }}
@@ -222,11 +221,11 @@ const Home = () => {
               THE<br />REDESIGN.
             </h1>
             <p className="text-sm md:text-base text-black/70 font-light max-w-md mb-10 leading-relaxed tracking-wide mx-auto md:mx-0">
-              Explore the intersection of pure performance and timeless aesthetic. 
+              Explore the intersection of pure performance and timeless aesthetic.
               Our new collection defines the modern wardrobe with uncompromised quality.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-6">
-              <Button 
+              <Button
                 onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
                 className="bg-black text-white px-12 py-5 rounded-none text-[10px] tracking-[0.2em] font-bold uppercase hover:bg-black/80 transition-all w-full sm:w-auto"
               >
@@ -242,7 +241,7 @@ const Home = () => {
         {/* Scroll Indicator (Hidden on mobile for space) */}
         <div className="absolute bottom-10 left-10 z-20 hidden md:flex flex-col items-center gap-4">
           <div className="w-px h-16 bg-black/10 relative overflow-hidden">
-            <motion.div 
+            <motion.div
               animate={{ y: [0, 64] }}
               transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
               className="absolute top-0 left-0 w-full h-1/2 bg-black/40"
@@ -260,14 +259,14 @@ const Home = () => {
               <h2 className="text-4xl md:text-5xl font-serif text-black mb-4">Latest Pieces</h2>
               <p className="text-sm text-[#888] font-light uppercase tracking-widest">Selected Curations for You</p>
             </div>
-            
+
             {/* Filters */}
             <div className="flex flex-col sm:flex-row items-center gap-6 w-full md:w-auto">
               <div className="relative w-full sm:w-64">
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 text-[#aaa]">
                   <Search size={14} />
                 </div>
-                <input 
+                <input
                   type="text"
                   placeholder="SEARCH COLLECTION..."
                   value={search}
@@ -277,7 +276,7 @@ const Home = () => {
               </div>
               <div className="flex items-center gap-4 bg-[#f9f9f9] px-6 py-3 rounded-full border border-black/5">
                 <Filter size={12} className="text-[#888]" />
-                <select 
+                <select
                   value={currencyFilter}
                   onChange={(e) => setCurrencyFilter(e.target.value)}
                   className="bg-transparent text-[10px] tracking-[0.15em] font-bold uppercase focus:outline-none cursor-pointer"
@@ -304,7 +303,7 @@ const Home = () => {
                 ))}
               </Grid>
             ) : (
-              <motion.div 
+              <motion.div
                 key="empty"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -315,7 +314,7 @@ const Home = () => {
                 </div>
                 <h3 className="text-xl font-serif mb-2">No items found</h3>
                 <p className="text-xs text-[#aaa] uppercase tracking-widest">Try adjusting your search or filters</p>
-                <button 
+                <button
                   onClick={() => { setSearch(""); setCurrencyFilter("ALL"); }}
                   className="mt-10 text-[10px] font-bold tracking-[0.2em] uppercase border-b border-black pb-1 hover:text-[#888] hover:border-black/20 transition-all"
                 >

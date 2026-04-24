@@ -35,7 +35,7 @@ const CartItems = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
         <div className="h-6 w-32 bg-neutral-100 rounded mb-8 animate-pulse" />
         <div className="h-12 w-64 bg-neutral-100 rounded mb-12 animate-pulse" />
         <div className="flex flex-col lg:flex-row gap-16">
@@ -55,7 +55,7 @@ const CartItems = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-[#fafafa] min-h-screen">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12 bg-[#fafafa] min-h-screen">
       <div className="flex items-center gap-2 mb-8 group cursor-pointer w-fit" onClick={() => navigate('/products')}>
         <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
         <span className="text-sm font-medium uppercase tracking-wider">Continue Shopping</span>
