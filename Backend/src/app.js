@@ -21,6 +21,7 @@ app.use(cors({
     origin: "https://fit-fusion-kappa-wheat.vercel.app",
     credentials: true
 }));
+app.set("trust proxy", 1); 
 
 passport.use(new GoogleStrategy({
     clientID: config.GOOGLE_CLIENT_ID,
