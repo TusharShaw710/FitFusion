@@ -120,7 +120,7 @@ export default function RegisterForm() {
           Create Account
         </h1>
         <p className="mt-2 text-sm text-[#9e9890] font-light">
-          Join the Snitch community of tastemakers.
+          Join the FitFushion community of tastemakers.
         </p>
       </motion.div>
 
@@ -212,7 +212,7 @@ export default function RegisterForm() {
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-3 text-xs text-[#9e9890] leading-relaxed"
               >
-                You'll be able to list and sell items on Snitch after verification.
+                You'll be able to list and sell items on FitFashion after verification.
               </motion.p>
             )}
           </motion.div>

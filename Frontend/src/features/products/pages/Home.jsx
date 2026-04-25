@@ -215,20 +215,20 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-white">
 
-      {/* PREMIUM SPLIT HERO SECTION WITH CAROUSEL */}
-      <section className="relative h-[100vh] w-full bg-white flex flex-col md:flex-row mt-16 md:mt-0 overflow-hidden">
+      {/* PREMIUM BLENDED HERO SECTION WITH CAROUSEL */}
+      <section className="relative h-[100vh] w-full bg-white overflow-hidden flex flex-col md:flex-row mt-16 md:mt-0">
         
         <AnimatePresence mode="wait">
           {/* Left Side: Content */}
           <motion.div 
             key={`content-${currentSlide}`}
-            initial={{ opacity: 0, x: -50 }}
+            initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 1, ease: [0.25, 0.1, 0.25, 1] }}
-            className="w-full md:w-1/2 h-[50vh] md:h-full flex items-center justify-center p-8 md:p-20 relative z-10 bg-white"
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full md:w-1/2 h-full flex items-center justify-center p-8 md:p-20 relative z-30 bg-white/40 md:bg-white backdrop-blur-md md:backdrop-blur-none"
           >
-            <div className="max-w-md w-full">
+            <div className="max-w-md w-full relative z-10">
               <span className="inline-block text-[10px] font-bold tracking-[0.4em] uppercase text-black/40 mb-6">
                 Spring / Summer 2026
               </span>
@@ -240,9 +240,9 @@ const Home = () => {
               </p>
               <Button
                 onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
-                className="bg-black text-white px-14 py-5 rounded-none text-[10px] tracking-[0.25em] font-bold uppercase transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:bg-black/90 w-full sm:w-auto"
+                className="bg-black text-white px-14 py-5 rounded-none text-[10px] tracking-[0.25em] font-bold uppercase transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_20px_50px_rgba(0,0,0,0.15)] hover:bg-neutral-900 w-full sm:w-auto relative overflow-hidden group/btn"
               >
-                Shop Now
+                <span className="relative z-10">Shop Now</span>
               </Button>
             </div>
           </motion.div>
@@ -252,28 +252,35 @@ const Home = () => {
           {/* Right Side: Image */}
           <motion.div 
             key={`image-${currentSlide}`}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 50 }}
-            transition={{ duration: 1, ease: [0.25, 0.1, 0.25, 1] }}
-            className="w-full md:w-1/2 h-[50vh] md:h-full relative overflow-hidden group"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
+            className="absolute inset-0 md:relative md:w-1/2 h-full z-10 overflow-hidden group"
           >
             <motion.img 
               initial={{ scale: 1.1 }}
               animate={{ scale: 1 }}
               whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              transition={{ duration: 1.5, ease: [0.33, 1, 0.68, 1] }}
               src={HERO_SLIDES[currentSlide].image} 
               alt="Fashion Model"
               className="w-full h-full object-cover object-center"
             />
-            {/* Subtle gradient overlay (right to left fade) */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/10 mix-blend-multiply pointer-events-none" />
+            
+            {/* PREMIUM GRADIENT BLEND (Desktop) */}
+            <div className="hidden md:block absolute inset-y-0 left-0 w-64 bg-gradient-to-r from-white via-white/60 to-transparent z-20" />
+            
+            {/* SUBTLE INNER SHADOW (Desktop) */}
+            <div className="hidden md:block absolute inset-y-0 left-0 w-[1px] bg-black/5 z-20" />
+
+            {/* SOFT OVERLAY (Mobile) */}
+            <div className="md:hidden absolute inset-0 bg-white/20" />
           </motion.div>
         </AnimatePresence>
 
         {/* Carousel Indicators */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-40 flex gap-3">
           {HERO_SLIDES.map((_, idx) => (
             <button
               key={idx}

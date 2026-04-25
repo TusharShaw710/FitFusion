@@ -12,7 +12,7 @@ export default function AuthLayout({ children, imageCaption = "The New Collectio
       <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-[#1a1a1a]">
         <img
           src="/luxury-fashion.jpg"
-          alt="Snitch luxury fashion"
+          alt="FitFushion luxury fashion"
           className="w-full h-full object-cover object-center opacity-90"
           onError={(e) => {
             /* Fallback gradient if image not found */
@@ -47,7 +47,7 @@ export default function AuthLayout({ children, imageCaption = "The New Collectio
         {/* Mobile logo */}
         <div className="lg:hidden mb-10 text-center">
           <span className="text-[#1a1a1a] text-2xl font-semibold tracking-[0.3em] uppercase">
-            Snitch
+            FitFushion
           </span>
         </div>
 
