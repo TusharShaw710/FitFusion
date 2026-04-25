@@ -28,12 +28,12 @@ export const Skeleton = ({ className = '', ...props }) => {
  * 1. CartItemSkeleton: Matches the layout of a cart item card.
  */
 export const CartItemSkeleton = () => (
-  <div className="bg-white p-6 rounded-2xl flex gap-8 items-center border border-neutral-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)]">
+  <div className="bg-white p-4 sm:p-6 rounded-2xl flex flex-col sm:flex-row gap-6 sm:gap-8 items-start sm:items-center border border-neutral-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)]">
     {/* Image Placeholder */}
-    <Skeleton className="w-40 h-52 rounded-xl flex-shrink-0" />
+    <Skeleton className="w-full sm:w-40 h-72 sm:h-52 rounded-xl flex-shrink-0" />
     
     {/* Content Placeholder */}
-    <div className="flex-grow space-y-6">
+    <div className="flex-grow w-full space-y-6">
       <div className="flex justify-between items-start">
         <div className="space-y-2">
           <Skeleton className="h-3 w-16" /> {/* Category */}

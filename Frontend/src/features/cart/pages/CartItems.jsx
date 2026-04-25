@@ -138,11 +138,11 @@ const CartItemCard = ({ item, onClick , onIncrement, onDecrement, onRemove }) =>
       exit={{ opacity: 0, x: -50 }}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="group bg-white p-6 rounded-2xl flex gap-8 items-center border border-neutral-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] transition-all duration-500"
+      className="group bg-white p-4 sm:p-6 rounded-2xl flex flex-col sm:flex-row gap-6 sm:gap-8 items-start sm:items-center border border-neutral-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] transition-all duration-500"
       onClick={onClick}
     >
       {/* Product Image */}
-      <div className="w-40 h-52 bg-neutral-100 rounded-xl overflow-hidden flex-shrink-0 relative cursor-pointer">
+      <div className="w-full sm:w-40 h-72 sm:h-52 bg-neutral-100 rounded-xl overflow-hidden flex-shrink-0 relative cursor-pointer">
         <img 
           src={imageUrl} 
           alt={item.product.name} 
@@ -152,7 +152,7 @@ const CartItemCard = ({ item, onClick , onIncrement, onDecrement, onRemove }) =>
       </div>
 
       {/* Product Info */}
-      <div className="flex-grow space-y-4">
+      <div className="flex-grow w-full space-y-4">
         <div className="flex justify-between items-start">
           <div>
             <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-semibold mb-1 block">
