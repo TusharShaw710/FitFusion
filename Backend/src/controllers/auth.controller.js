@@ -3,27 +3,32 @@ import jwt from "jsonwebtoken"
 import config  from "../config/config.js";
 
 
-async function sendTokenResponse(user,res,message) {
-
+async function sendTokenResponse(user, res, message) {
     const token = jwt.sign({
         id: user._id
-    }, config.JWT_SECRET,{
+    }, config.JWT_SECRET, {
         expiresIn: "7d"
     });
 
-    res.cookie("token", token);
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    };
+
+    res.cookie("token", token, cookieOptions);
 
     res.status(200).json({
         message,
-        success:true,
-        user:{
+        success: true,
+        user: {
             email: user.email,
             contact: user.contact,
             fullname: user.fullname,
             role: user.role
         }
     });
-
 }
 
 
@@ -109,11 +114,14 @@ export const googleCallback = async (req, res) => {
         expiresIn:"7d"
     });
 
-    res.cookie("token", token, {
+    const cookieOptions = {
         httpOnly: true,
         secure: true,
-        sameSite: "None"
-    });
+        sameSite: "None",
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    };
+
+    res.cookie("token", token, cookieOptions);
 
     res.redirect("https://fit-fusion-kappa-wheat.vercel.app");
 }
