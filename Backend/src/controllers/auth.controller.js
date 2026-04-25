@@ -109,7 +109,11 @@ export const googleCallback = async (req, res) => {
         expiresIn:"7d"
     });
 
-    res.cookie("token",token);
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None"
+    });
 
     res.redirect("https://fit-fusion-kappa-wheat.vercel.app");
 }
