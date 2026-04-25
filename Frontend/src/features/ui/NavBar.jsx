@@ -46,7 +46,7 @@ const NavBar = () => {
         <div className="flex items-center gap-12">
           <span
             className="text-2xl font-serif tracking-tighter cursor-pointer"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => navigate("/")}
           >
             FitFusion
           </span>
