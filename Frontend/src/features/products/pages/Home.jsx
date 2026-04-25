@@ -41,6 +41,7 @@ const Grid = ({ children, className = "" }) => (
  * REUSABLE PRODUCT CARD
  */
 const ProductCard = ({ product }) => {
+  const [isHovered, setIsHovered] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const navigate = useNavigate();
@@ -49,13 +50,15 @@ const ProductCard = ({ product }) => {
   const handleQuickAdd = async (e) => {
     e.stopPropagation();
     if (!product.variants || product.variants.length === 0) return;
+
+    // Fallback to first variant if default is not available
     const defaultVariant = product.variants.find(v => v._id === product.defaultVariantId) || product.variants[0];
 
     setIsAdding(true);
     try {
       await addToCart(product._id, defaultVariant._id, 1);
       setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
+      setTimeout(() => setAdded(false), 2000); // Reset after 2s
     } catch (error) {
       console.error("Failed to quick add", error);
     } finally {
@@ -63,76 +66,64 @@ const ProductCard = ({ product }) => {
     }
   };
 
-  const currency = product.variants?.[0]?.price?.currency || "INR";
-  const amount = product.variants?.[0]?.price?.amount || 0;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="flex flex-col w-full group cursor-pointer"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group cursor-pointer"
       onClick={() => navigate(`/product/${product._id}`)}
     >
-      {/* 1. Image Section */}
-      <div className="relative w-full h-[200px] sm:h-[280px] overflow-hidden rounded-xl bg-[#f7f7f7] mb-4">
+      <div className="relative aspect-[4/5] bg-[#f7f7f7] overflow-hidden mb-6">
         <motion.img
           src={product.variants?.[0]?.images?.[0]?.url || product.images?.[0]?.url || "https://images.unsplash.com/photo-1539106609512-725e3652e361?q=80&w=1000&auto=format&fit=crop"}
           alt={product.name}
-          whileHover={{ scale: 1.05 }}
+          animate={{ scale: isHovered ? 1.05 : 1 }}
           transition={{ duration: 0.8, ease: [0.33, 1, 0.68, 1] }}
           className="w-full h-full object-cover"
         />
-        
-        {/* Heart Icon Overlay */}
-        <button 
-          onClick={(e) => { e.stopPropagation(); }} 
-          className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-md rounded-full text-black hover:bg-black hover:text-white transition-all shadow-sm"
-        >
-          <Heart size={14} />
+
+        {/* Heart Icon */}
+        <button className="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-black hover:text-white">
+          <Heart size={16} />
         </button>
+
+        {/* Quick Add Button */}
+        <AnimatePresence>
+          {isHovered && (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 10, opacity: 0 }}
+              className="absolute bottom-0 left-0 right-0 p-4"
+            >
+              <Button
+                id="quickAddX"
+                onClick={handleQuickAdd}
+                disabled={isAdding}
+                className="w-full bg-black text-white py-4 rounded-none text-[10px] tracking-[0.2em] font-bold uppercase transition-all hover:bg-black/90 flex items-center justify-center gap-2 disabled:bg-black/70"
+              >
+                {isAdding ? <InlineLoader color="white" /> : added ? "Added" : "Quick Add"}
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* 2. Content Section */}
-      <div className="flex flex-col gap-1 mb-4 flex-grow">
-        <div className="flex justify-between items-start gap-2">
-          <h3 className="text-[13px] font-bold tracking-tight text-[#1a1a1a] uppercase leading-snug line-clamp-2">
+      <div className="space-y-1">
+        <div className="flex justify-between items-start">
+          <h3 className="text-[13px] font-medium tracking-tight text-[#1a1a1a] uppercase leading-tight">
             {product.name}
           </h3>
+          <span className="text-[13px] text-[#1a1a1a] font-normal">
+            {(product.variants?.[0]?.price?.currency) || "INR"} {(product.variants?.[0]?.price?.amount) || 0}
+          </span>
         </div>
-        <p className="text-[11px] text-[#888] font-light tracking-widest uppercase truncate">
-          {product.category || "New Arrival"}
+        <p className="text-[11px] text-[#888] font-light tracking-wide uppercase">
+          New Arrival
         </p>
-      </div>
-
-      {/* 3. Action Section (Price + Button) */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-black/5">
-        <div className="flex items-baseline gap-1">
-          <span className="text-[10px] text-[#888] font-medium uppercase tracking-tighter">{currency}</span>
-          <span className="text-[15px] font-bold text-black tracking-tight">{amount.toLocaleString()}</span>
-        </div>
-        
-        <Button
-          id={`quickAdd-${product._id}`}
-          onClick={handleQuickAdd}
-          disabled={isAdding || added}
-          className={`w-full sm:w-auto px-6 py-2.5 rounded-lg text-[10px] tracking-widest font-bold uppercase transition-all flex items-center justify-center gap-2 ${
-            added 
-              ? "bg-green-500 text-white border-none" 
-              : "bg-black text-white hover:bg-black/90"
-          }`}
-        >
-          {isAdding ? (
-            <InlineLoader color="white" />
-          ) : added ? (
-            "Added"
-          ) : (
-            <>
-              <Plus size={12} strokeWidth={3} />
-              Quick Add
-            </>
-          )}
-        </Button>
       </div>
     </motion.div>
   );
