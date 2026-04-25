@@ -226,16 +226,16 @@ const Home = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -30 }}
             transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            className="w-full md:w-1/2 h-full flex items-center justify-center p-8 md:p-20 relative z-30 bg-white/40 md:bg-white backdrop-blur-md md:backdrop-blur-none"
+            className="w-full md:w-1/2 h-full flex items-center justify-center p-8 md:p-20 relative z-30 md:bg-white"
           >
-            <div className="max-w-md w-full relative z-10">
-              <span className="inline-block text-[10px] font-bold tracking-[0.4em] uppercase text-black/40 mb-6">
+            <div className="max-w-md w-full relative z-10 text-center md:text-left">
+              <span className="inline-block text-[10px] font-bold tracking-[0.4em] uppercase text-white/60 md:text-black/40 mb-6">
                 Spring / Summer 2026
               </span>
-              <h1 className="text-6xl md:text-8xl font-serif leading-[0.9] tracking-tighter text-black mb-8 whitespace-pre-line">
+              <h1 className="text-6xl md:text-8xl font-serif leading-[0.9] tracking-tighter text-white md:text-black mb-8 whitespace-pre-line [text-shadow:_0_2px_10px_rgba(0,0,0,0.2)] md:[text-shadow:none]">
                 {HERO_SLIDES[currentSlide].title}
               </h1>
-              <p className="text-sm md:text-base text-black/60 font-light mb-12 leading-relaxed tracking-wide">
+              <p className="text-sm md:text-base text-white/80 md:text-black/60 font-light mb-12 leading-relaxed tracking-wide">
                 {HERO_SLIDES[currentSlide].subtitle}
               </p>
               <Button
@@ -265,7 +265,7 @@ const Home = () => {
               transition={{ duration: 1.5, ease: [0.33, 1, 0.68, 1] }}
               src={HERO_SLIDES[currentSlide].image} 
               alt="Fashion Model"
-              className="w-full h-full object-cover object-center"
+              className="w-full h-full object-cover object-center brightness-[0.9] md:brightness-100"
             />
             
             {/* PREMIUM GRADIENT BLEND (Desktop) */}
@@ -274,8 +274,8 @@ const Home = () => {
             {/* SUBTLE INNER SHADOW (Desktop) */}
             <div className="hidden md:block absolute inset-y-0 left-0 w-[1px] bg-black/5 z-20" />
 
-            {/* SOFT OVERLAY (Mobile) */}
-            <div className="md:hidden absolute inset-0 bg-white/20" />
+            {/* PREMIUM GRADIENT OVERLAY (Mobile) */}
+            <div className="md:hidden absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-20" />
           </motion.div>
         </AnimatePresence>
 
