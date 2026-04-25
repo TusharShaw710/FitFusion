@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ChevronLeft } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { useCart } from '../hook/useCart';
 import { useNavigate } from 'react-router';
 import Button from '../../ui/Button';
@@ -125,10 +125,40 @@ const CartItems = () => {
 };
 
 const CartItemCard = ({ item, onClick , onIncrement, onDecrement, onRemove }) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
   // Extract variant logic: match item.variant with product.variants._id
   const selectedVariant = item.product.variants.find(v => v._id === item.variant);
   const imageUrl = selectedVariant?.images?.[0]?.url || item.product.images?.[0]?.url;
   const attributes = selectedVariant?.attributes || {};
+
+  const handleIncrement = async (e) => {
+    e.stopPropagation();
+    if (isUpdating) return;
+    setIsUpdating(true);
+    try {
+      await onIncrement();
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDecrement = async (e) => {
+    e.stopPropagation();
+    if (isUpdating || item.quantity <= 1) return;
+    setIsUpdating(true);
+    try {
+      await onDecrement();
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleRemove = (e) => {
+    e.stopPropagation();
+    if (isUpdating) return;
+    onRemove();
+  };
 
   return (
     <motion.div 
@@ -163,11 +193,9 @@ const CartItemCard = ({ item, onClick , onIncrement, onDecrement, onRemove }) =>
             </h3>
           </div>
           <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-            className="p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-300 group/remove"
+            onClick={handleRemove}
+            disabled={isUpdating}
+            className={`p-2 rounded-full transition-all duration-300 group/remove ${isUpdating ? 'text-neutral-100 cursor-not-allowed' : 'text-neutral-300 hover:text-red-500 hover:bg-red-50'}`}
           >
             <Trash2 size={20} className="group-hover/remove:scale-110 transition-transform" />
           </button>
@@ -190,26 +218,21 @@ const CartItemCard = ({ item, onClick , onIncrement, onDecrement, onRemove }) =>
           {/* Quantity Controls */}
           <div className="flex items-center bg-neutral-50 rounded-full p-1 border border-neutral-100">
             <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                onDecrement();
-              }}
-              disabled={item.quantity <= 1}
-              className={`p-2 rounded-full transition-all ${item.quantity <= 1 ? 'text-neutral-200 cursor-not-allowed' : 'text-neutral-600 hover:bg-white hover:shadow-sm'}`}
+              onClick={handleDecrement}
+              disabled={isUpdating || item.quantity <= 1}
+              className={`p-2 rounded-full transition-all ${isUpdating || item.quantity <= 1 ? 'text-neutral-200 cursor-not-allowed' : 'text-neutral-600 hover:bg-white hover:shadow-sm'}`}
             >
-              <Minus size={16} />
+              {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <Minus size={16} />}
             </button>
             <span className="w-10 text-center font-medium text-neutral-900 tabular-nums">
               {item.quantity}
             </span>
             <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                onIncrement();
-              }}
-              className="p-2 rounded-full text-neutral-600 hover:bg-white hover:shadow-sm transition-all"
+              onClick={handleIncrement}
+              disabled={isUpdating}
+              className={`p-2 rounded-full transition-all ${isUpdating ? 'text-neutral-200 cursor-not-allowed' : 'text-neutral-600 hover:bg-white hover:shadow-sm'}`}
             >
-              <Plus size={16} />
+              {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
             </button>
           </div>
         </div>
