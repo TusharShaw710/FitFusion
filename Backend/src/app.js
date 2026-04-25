@@ -20,7 +20,7 @@ app.use(passport.initialize());
 passport.use(new GoogleStrategy({
     clientID: config.GOOGLE_CLIENT_ID,
     clientSecret: config.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/api/auth/google/callback"
+    callbackURL: config.GOOGLE_REDIRECT_URI
 }, (accessToken, refreshToken, profile, done) => {
     return done(null, profile);
 }))
