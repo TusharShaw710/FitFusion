@@ -1,5 +1,5 @@
 import { fetchCartApi,addToCartApi,incrementCartItemQuantityApi,decrementCartItemQuantityApi,removeFromCartApi } from "../service/cart.api";
-import { setCartItems,incrementQuantity,decrementQuantity,removeFromCart as removeFromCartAction } from "../state/cart.slice";
+import { setCartItems, setCartTotal, incrementQuantity, decrementQuantity, removeFromCart as removeFromCartAction } from "../state/cart.slice";
 import {useDispatch,useSelector} from "react-redux"
 import { useToast } from "../../ui/toast/useToast";
 
@@ -7,11 +7,16 @@ export const useCart=()=>{
     const dispatch=useDispatch();
     const { showToast } = useToast();
     const cartItems=useSelector((state)=>state.cart.cartItems);
+    const cartTotal=useSelector((state)=>state.cart.cartTotal);
+    const cartCurrency=useSelector((state)=>state.cart.cartCurrency);
 
     const fetchCart=async()=>{
         try{
             const cartData=await fetchCartApi();
-            dispatch(setCartItems(cartData.cart.items));
+            // Aggregation pipeline returns cart as an array; use the first document
+            const cartDoc = cartData.cart[0];
+            dispatch(setCartItems(cartDoc.items));
+            dispatch(setCartTotal({ total: cartDoc.total, currency: cartDoc.currency }));
         }catch(error){
             throw error;
         }
@@ -30,7 +35,8 @@ export const useCart=()=>{
 
     const incrementCartItemQuantity=async(productId,variantId)=>{
         try{
-            const response = await incrementCartItemQuantityApi(productId,variantId);
+            await incrementCartItemQuantityApi(productId,variantId);
+            // Optimistic: update quantity in store; slice recalculates total
             dispatch(incrementQuantity({productId,variantId}));
         }catch(error){
             showToast({ message: error.response?.data?.message || "Failed to update quantity", type: 'error' });
@@ -40,7 +46,8 @@ export const useCart=()=>{
 
     const decrementCartItemQuantity=async(productId,variantId)=>{
         try{
-            const response = await decrementCartItemQuantityApi(productId,variantId);
+            await decrementCartItemQuantityApi(productId,variantId);
+            // Optimistic: update quantity in store; slice recalculates total
             dispatch(decrementQuantity({productId,variantId}));
         }catch(error){
             showToast({ message: error.response?.data?.message || "Failed to update quantity", type: 'error' });
@@ -51,6 +58,7 @@ export const useCart=()=>{
     const removeFromCart=async(variantId)=>{
         try{
             const response = await removeFromCartApi(variantId);
+            // Optimistic: remove item from store; slice recalculates total
             dispatch(removeFromCartAction({variantId}));
             showToast({ message: response.message, type: 'success' });
         }catch(error){
@@ -61,6 +69,8 @@ export const useCart=()=>{
 
     return {
         cartItems,
+        cartTotal,
+        cartCurrency,
         fetchCart,
         addToCart,
         incrementCartItemQuantity,

@@ -8,7 +8,9 @@ import { CartItemSkeleton, CartSummarySkeleton, ListSkeleton } from '../../ui/Sk
 
 const CartItems = () => {
   const { 
-    cartItems, 
+    cartItems,
+    cartTotal,
+    cartCurrency,
     fetchCart, 
     incrementCartItemQuantity, 
     decrementCartItemQuantity, 
@@ -30,8 +32,9 @@ const CartItems = () => {
     loadCart();
   }, []);
 
-  const subtotal = Array.isArray(cartItems) ? cartItems.reduce((acc, item) => acc + (item.price.amount * item.quantity), 0) : 0;
+  // cartTotal comes from the server-side aggregation pipeline (no frontend recalculation)
   const totalItems = Array.isArray(cartItems) ? cartItems.reduce((acc, item) => acc + item.quantity, 0) : 0;
+  const currencySymbol = cartCurrency === 'INR' ? '₹' : cartCurrency;
 
   if (loading) {
     return (
@@ -88,7 +91,7 @@ const CartItems = () => {
             <div className="space-y-4 mb-8">
               <div className="flex justify-between text-neutral-500 font-light">
                 <span>Subtotal</span>
-                <span>₹{subtotal.toLocaleString()}</span>
+                <span>{currencySymbol}{cartTotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-neutral-500 font-light">
                 <span>Total Items</span>
@@ -101,7 +104,7 @@ const CartItems = () => {
               <div className="pt-4 border-t border-neutral-100">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-medium text-neutral-900">Estimated Total</span>
-                  <span className="text-2xl font-semibold text-neutral-900 font-serif">₹{subtotal.toLocaleString()}</span>
+                  <span className="text-2xl font-semibold text-neutral-900 font-serif">{currencySymbol}{cartTotal.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -127,8 +130,8 @@ const CartItems = () => {
 const CartItemCard = ({ item, onClick , onIncrement, onDecrement, onRemove }) => {
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Extract variant logic: match item.variant with product.variants._id
-  const selectedVariant = item.product.variants.find(v => v._id === item.variant);
+  // Aggregation pipeline already projects the matched variant as a single object
+  const selectedVariant = item.product.variants;
   const imageUrl = selectedVariant?.images?.[0]?.url || item.product.images?.[0]?.url;
   const attributes = selectedVariant?.attributes || {};
 
